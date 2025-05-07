@@ -1,0 +1,30 @@
+Header
+| MAGIC                   'NSPT'   int32
+| VERSION                 1000     int32
+| NAME                    ''       string
+| MODULE                  ''       string
+| DEBUG                   false    bool
+| CONSTANTPOOL_SIZE       100      uint64
+| CONSTANTPOOL
+  | ITEM
+    | ID         0      uint32
+    | TYPE       0x00   uint8
+    | DATA_SIZE  0      uint32
+    | DATA       0      uint8*
+| IMPORT_SIZE            100       uint32
+| IMPORT
+  | ITEM
+    | ID             0      uint32
+    | LIBNAME_SIZE   0      uint32
+    | LIBNAME        0      uint8[]
+| TYPEDEF_SIZE   0      uint32
+| TYPEDEF
+  | ITEM
+    | ID             0      uint32
+    | FIELDSIZE      0      uint32
+    | FIELDS
+      | ITEM 
+        | ID         0      uint32 
+        | TYPE       0      uint64
+| CODEPOOL_SIZE  0      uint32
+| CODEPOOL

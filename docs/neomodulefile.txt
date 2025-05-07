@@ -1,0 +1,18 @@
+*.nmd file format
+
+| 0 -> 4   | uint32 | 'NMDF'
+| 4 -> 8   | uint32 | neolang version
+| 8 -> 12  | uint32 | neovm min version
+| 12 -> 13 | bool   | little endian
+| 14 -> 18 | uint32 | meta-offset
+| 18 -> 22 | uint32 | import-map-offset
+| 22 -> 26 | uint32 | type-map-offset
+| 26 -> 30 | uint32 | func-map-offset
+| 30 -> 34 | uint32 | end-map
+| 34 -> 48 |        | padding
+
+|| meta map
+|| import map
+|| type map
+|| func map
+|| end map

@@ -10,11 +10,12 @@ namespace neo::ast {
     public:
         VarDecl(const std::string_view& name, ASTTypeRef type, ASTExpr* init = nullptr, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kVar)
-            , name {name}
-            , parent {parent} 
-            , type {type}
-            , initExpr {init}
-        {}
+            , name{ name }
+            , parent{ parent }
+            , type{ type }
+            , initExpr{ init }
+        {
+        }
         ~VarDecl() = default;
 
     public:
@@ -27,19 +28,20 @@ namespace neo::ast {
     };
 
 
-    class FuncDecl : public ASTDecl 
+    class FuncDecl : public ASTDecl
     {
     public:
         FuncDecl(const std::string_view& name, ASTTypeRef retType, std::vector<VarDecl*> args, class CompoundStmt* body = nullptr, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kFunc)
-            , name {name}
-            , returnType {retType}
-            , args {args}
-            , funcBody {body}
-            , parent {parent}
-        {}
+            , name{ name }
+            , returnType{ retType }
+            , args{ args }
+            , funcBody{ body }
+            , parent{ parent }
+        {
+        }
         ~FuncDecl() = default;
-    
+
     public:
         std::string name;
         ASTTypeRef returnType;
@@ -55,16 +57,17 @@ namespace neo::ast {
     };
 
 
-    class FieldDecl : public ASTDecl 
+    class FieldDecl : public ASTDecl
     {
     public:
         FieldDecl(const std::string_view& name, ASTTypeRef type, ASTDecl* parent, ASTExpr* init = nullptr)
             : ASTDecl(DeclKind::kField)
-            , name {name}
-            , parent {parent}
-            , type {type}
-            , init {init}
-        {}
+            , name{ name }
+            , parent{ parent }
+            , type{ type }
+            , init{ init }
+        {
+        }
         ~FieldDecl() = default;
 
     public:
@@ -78,16 +81,19 @@ namespace neo::ast {
     class ClassDecl : public ASTDecl
     {
     public:
-        ClassDecl(const std::string_view& name, std::vector<ASTTypeRef> baseClasses)
+        ClassDecl(const std::string_view& name, std::vector<ASTTypeRef> baseClasses, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kClass)
-            , className {name}
-            , baseClasses {baseClasses}
-        {}
+            , name{ name }
+            , baseClasses{ baseClasses }
+            , parent{ parent }
+        {
+        }
         ~ClassDecl() = default;
 
     public:
-        std::string className;
+        std::string name;
         std::vector<ASTTypeRef> baseClasses;
+        std::vector<ASTDecl*> subClasses;
         std::vector<FieldDecl*> fields;
         std::vector<VarDecl*> variables;
         std::vector<FuncDecl*> functions;
@@ -97,14 +103,15 @@ namespace neo::ast {
     };
 
 
-    class StructDecl : public ASTDecl 
+    class StructDecl : public ASTDecl
     {
     public:
         StructDecl(const std::string_view& name, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kStruct)
-            , name {name}
-            , parent {parent}
-        {}
+            , name{ name }
+            , parent{ parent }
+        {
+        }
         ~StructDecl() = default;
 
     public:
@@ -115,17 +122,69 @@ namespace neo::ast {
     };
 
 
+    class InterfaceDecl : public ASTDecl
+    {
+    public:
+        InterfaceDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+            : ASTDecl(DeclKind::kInterface)
+            , name{ name }
+            , parent{ parent }
+        {
+        }
+        ~InterfaceDecl();
+
+    public:
+        std::string name;
+        std::vector<FuncDecl*> children;
+        ASTDecl* parent = nullptr;
+    };
+
+
+    class EnumDecl : public ASTDecl
+    {
+    public:
+        EnumDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+            : ASTDecl(DeclKind::kEnum)
+            , name{ name }
+            , parent{ parent }
+        {
+        }
+        ~EnumDecl();
+
+    public:
+        std::string name;
+        std::vector<VarDecl*> children;
+        ASTDecl* parent = nullptr;
+    };
+
+
     class ModuleDecl : public ASTDecl
     {
     public:
-        ModuleDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+        ModuleDecl(const std::string_view& name, ModuleDecl* parent = nullptr)
             : ASTDecl(DeclKind::kModule)
-            , parent {parent}
-        {}
-        ~ModuleDecl() = default;
+            , parent{ parent }
+            , name{ name }
+        {
+        }
+        ~ModuleDecl();
 
     public:
-        std::vector<ASTDecl*> childrens;
-        ASTDecl* parent = nullptr;
+        class TopLevelDecls* children;
+        std::string name;
+        ModuleDecl* parent = nullptr;
+    };
+
+
+    class TopLevelDecls : public ASTDecl 
+    {
+    public:
+        TopLevelDecls()
+            : ASTDecl(DeclKind::kTopLevelDecls)
+        {}
+        ~TopLevelDecls();
+    
+    public:
+        std::vector<ASTDecl*> decls;
     };
 }

@@ -52,6 +52,7 @@ namespace neo {
         NToken& peekPrevious();
         NToken& nextToken();
         NToken& peekNext();
+        NToken& current();
         bool expectToken(NToken::TokenType);
 
     private:

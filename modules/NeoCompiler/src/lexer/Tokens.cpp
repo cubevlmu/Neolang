@@ -169,9 +169,9 @@ namespace neo {
     };
 
 
-    NToken::TokenType NToken::checkIdentifier(const flib::FStringView& c)
+    NToken::TokenType NToken::checkIdentifier(const std::string_view& c)
     {
-        std::string_view rc = c.cstr();
+        std::string_view rc = c.data();
         if (s_idTypes.find(rc) != s_idTypes.end()) {
             return s_idTypes.at(rc);
         }
@@ -179,7 +179,7 @@ namespace neo {
     }
 
 
-    flib::FStringView NToken::typeString(TokenType tk)
+    std::string_view NToken::typeString(TokenType tk)
     {
         int idx = (int)tk;
         if (idx < 0 || idx > 86) {
@@ -192,6 +192,12 @@ namespace neo {
     std::string NToken::toString() const
     {
         return "{ " + std::string(s_typeStrings[(int)type]) + " : " + value + " }";
+    }
+
+
+    std::string_view NToken::typeString() const
+    {
+        return typeString(type);
     }
 
 

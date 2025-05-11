@@ -5,7 +5,7 @@
 
 namespace neo {
 
-    NSourceFile::NSourceFile(const flib::FStringView& path, flib::IAllocator& alloc)
+    NSourceFile::NSourceFile(const std::string_view& path, flib::IAllocator& alloc)
         : m_alloc(alloc)
         , m_path {path}
         , m_content {}
@@ -22,7 +22,7 @@ namespace neo {
     flib::Result NSourceFile::readAll()
     {
         std::ifstream stm {};
-        stm.open(m_path.cstr());
+        stm.open(m_path.data());
         if (!stm.is_open()) {
             return flib::Result::kFileAccess;
         }
@@ -39,7 +39,7 @@ namespace neo {
     }
 
 
-    flib::FStringView NSourceFile::getContent() const
+    std::string_view NSourceFile::getContent() const
     {
         if (m_content.length() <= 0) {
             return "";
@@ -51,7 +51,7 @@ namespace neo {
     std::string NSourceFile::getFileName() const
     {
         size_t idx = m_path.length();
-        const char* ptr = m_path.getEnd();
+        const char* ptr = m_path.end();
 
         while (idx > 0) {
             ptr--;

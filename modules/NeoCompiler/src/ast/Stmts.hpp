@@ -139,4 +139,18 @@ namespace neo::ast {
         ~ContinueStmt() = default;
     };
 
+
+    class ImportStmt : public ASTStmt 
+    {
+    public:
+        ImportStmt(const std::string& name)
+            : ASTStmt(StmtKind::kImport)
+            , moduleName {name}
+        {}
+        ~ImportStmt() = default;
+
+    public:
+        const std::string moduleName;
+    };
+
 }

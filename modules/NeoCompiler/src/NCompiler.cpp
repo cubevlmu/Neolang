@@ -6,6 +6,11 @@
 #include "base/NSource.hpp"
 #include "lexer/NLexer.hpp"
 #include "base/StringUtils.hpp"
+#include "parser/NParsedFile.hpp"
+#include "parser/NParser.hpp"
+
+// #include "ast/ASTType.hpp"
+// #include "ast/Decl.hpp"
 
 namespace neo {
 
@@ -37,6 +42,19 @@ namespace neo {
     {
         printf("Hello world\n");
 
+        // ast::ModuleDecl def {"test"};
+        // ast::ClassDecl cDecl {"TestClass", {}, &def};
+
+        // ast::TypeCache cache {};
+        // if (!cache.newType(&def, &cDecl)) {
+        //     LogError("Insert failed!");
+        //     return false;
+        // }
+
+        // auto stringTypeRef = cache.getType("string");
+
+        // return false;
+
         // test nsource
         NSourceFile file {"lex.neo", m_alloc};
         if (file.readAll()) {
@@ -56,6 +74,19 @@ namespace neo {
         NFileOutput output {("lex_debug_" + name + ".txt").c_str()};
         lex.debugPrint(output);
         output.print();
+
+        NParsedFile pFile {};
+
+        NParserArgs args {
+            .file = &file,
+            .langVer = 1,
+            .lexer = &lex,
+            .output = pFile
+        };
+        NParser parser {args};
+        if (!parser.parse()) {
+            LogError("Parsed failed");
+        }
 
         return 0;
     }

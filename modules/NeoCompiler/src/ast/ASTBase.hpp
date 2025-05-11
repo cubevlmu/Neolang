@@ -4,6 +4,8 @@
 #include <string_view>
 #include <common.hpp>
 
+#include "diagnose/SourceLoc.hpp"
+
 namespace neo {
     class NDebugOutput;
     class SGSerializer;
@@ -14,9 +16,19 @@ namespace neo::ast {
     enum ASTType {
         kUnknown,
         kStatment,
-        kDeclaration
+        kDeclaration,
+        kTypeDef,
+        kArrayType,
+        kPointer,
+        kTypeRef
     };
     std::string_view getTypeString(ASTType);
+
+
+    struct Attribute {
+        std::string name;
+        std::vector<class ASTExpr*> arguments;
+    };
 
 
     class ASTNode
@@ -40,11 +52,7 @@ namespace neo::ast {
             return m_type;
         }
         
-        struct SourceLoc {
-            u32 line;
-            u32 column;
-            class NSourceFile* file;
-        } m_loc;
+        SourceLoc m_loc;
 
     private:
         ASTType m_type;
@@ -61,7 +69,8 @@ namespace neo::ast {
         kForeach,
         kReturn,
         kBreak,
-        kContinue
+        kContinue,
+        kImport
     };
     std::string_view getTypeString(StmtKind);
 
@@ -128,7 +137,10 @@ namespace neo::ast {
         kClass,
         kField,
         kStruct,
-        kModule
+        kModule,
+        kInterface,
+        kEnum,
+        kTopLevelDecls
     };
     std::string_view getTypeString(DeclKind);
 
@@ -140,7 +152,7 @@ namespace neo::ast {
             : ASTNode(ASTType::kDeclaration)
             , m_kind {kind} 
         {}
-        ~ASTDecl() = default;
+        ~ASTDecl();
 
     public:
         FLIB_FORCE_INLINE DeclKind getDeclKind() const { 
@@ -149,6 +161,7 @@ namespace neo::ast {
 
     public:
         bool isMarkedExport;
+        std::vector<Attribute*> attributes;
 
     private:
         DeclKind m_kind;

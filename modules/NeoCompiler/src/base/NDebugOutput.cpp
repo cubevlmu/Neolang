@@ -4,13 +4,13 @@
 
 namespace neo {
 
-    NFileOutput::NFileOutput(const flib::FStringView& path)
+    NFileOutput::NFileOutput(const std::string_view& path)
     {
-        if (std::filesystem::exists(path.cstr())) {
-            std::filesystem::remove(path.cstr());
+        if (std::filesystem::exists(path.data())) {
+            std::filesystem::remove(path.data());
         }
 
-        m_fs.open(path.cstr());
+        m_fs.open(path.data());
         if (!m_fs.is_open()) {
             LogError("Failed to open file");
         }
@@ -22,12 +22,12 @@ namespace neo {
         m_fs.close();
     }
 
-    void NFileOutput::writeLine(const flib::FStringView& line) {
-        m_fs << line.cstr() << '\n';
+    void NFileOutput::writeLine(const std::string_view& line) {
+        m_fs << line.data() << '\n';
     }
 
-    void NFileOutput::write(const flib::FStringView& line) {
-        m_fs << line.cstr();
+    void NFileOutput::write(const std::string_view& line) {
+        m_fs << line.data();
     }
 
     bool NFileOutput::print() {

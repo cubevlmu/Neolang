@@ -11,8 +11,8 @@ namespace neo {
     public:
         virtual ~NDebugOutput() = default;
 
-        virtual void writeLine(const flib::FStringView& line) = 0;
-        virtual void write(const flib::FStringView& txt) = 0;
+        virtual void writeLine(const std::string_view& line) = 0;
+        virtual void write(const std::string_view& txt) = 0;
         virtual bool print() = 0;
     };
 
@@ -22,15 +22,15 @@ namespace neo {
     public:
         virtual ~NConsoleOutput() = default;
 
-        virtual void writeLine(const flib::FStringView& line) override {
-            m_ss << line.cstr();
+        virtual void writeLine(const std::string_view& line) override {
+            m_ss << line.data();
             LogInfo(m_ss.str());
-            
+
             m_ss.clear();
             m_ss.str("");
         }
-        virtual void write(const flib::FStringView& txt) override {
-            m_ss << txt.cstr();
+        virtual void write(const std::string_view& txt) override {
+            m_ss << txt.data();
         }
         virtual bool print() override { return true; }
 
@@ -42,11 +42,11 @@ namespace neo {
     class NFileOutput : public NDebugOutput
     {
     public:
-        NFileOutput(const flib::FStringView& path);
+        NFileOutput(const std::string_view& path);
         virtual ~NFileOutput();
 
-        virtual void writeLine(const flib::FStringView& line) override;
-        virtual void write(const flib::FStringView& txt) override;
+        virtual void writeLine(const std::string_view& line) override;
+        virtual void write(const std::string_view& txt) override;
         virtual bool print() override;
 
     private:

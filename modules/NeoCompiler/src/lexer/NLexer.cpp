@@ -12,19 +12,19 @@ namespace neo {
         {'*', NToken::TokenType::kMul},
         // {'/', NToken::TokenType::kDiv},
         {'%', NToken::TokenType::kMod},
-    
+
         // 比较与移位
         {'<', NToken::TokenType::kLt},
         {'>', NToken::TokenType::kGt},
         {'=', NToken::TokenType::kAssign},
         {'!', NToken::TokenType::kLNot},
-    
+
         // 位运算
         {'&', NToken::TokenType::kBitAnd},
         {'|', NToken::TokenType::kBitOr},
         {'^', NToken::TokenType::kBitXor},
         {'~', NToken::TokenType::kBitNot},
-    
+
         // 括号与语法结构
         {'(', NToken::TokenType::kLParen},
         {')', NToken::TokenType::kRParen},
@@ -32,27 +32,27 @@ namespace neo {
         {'}', NToken::TokenType::kRBraces},
         {'[', NToken::TokenType::kLBracket},
         {']', NToken::TokenType::kRBracket},
-    
+
         // 分隔符
         {'.', NToken::TokenType::kDot},
         {':', NToken::TokenType::kColon},
         {';', NToken::TokenType::kSemicolon},
         {',', NToken::TokenType::kComma},
-    
+
         // 其他
         {'?', NToken::TokenType::kQuestion},
     };
-    
+
 
 #define LEX_TOKEN(TYPE, VALUE) NToken { .type = TYPE, .value = VALUE, .line = m_lex_line, .cursor = m_lex_cursor  }
 
 
     NLexer::NLexer(NSourceFile& file, flib::IAllocator& alloc)
         : m_alloc(alloc)
-        , m_tokens {}
-        , m_src{ file.getContent().cstr() }
+        , m_tokens{}
+        , m_src{ file.getContent().data() }
         , m_lex_max{ (u32)m_src.length() }
-        , m_source {file}
+        , m_source{ file }
     {
     }
 
@@ -77,101 +77,120 @@ namespace neo {
             if (s_token_types.find(c) != s_token_types.end()) {
                 NToken::TokenType type = s_token_types.at(c);
                 char next = m_src[m_lex_idx + 1];
-            
+
                 if (type == NToken::TokenType::kAssign) {
                     if (next == '=') {
                         pushToken(NToken::kEq, "==");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kLNot) {
+                }
+                else if (type == NToken::TokenType::kLNot) {
                     if (next == '=') {
                         pushToken(NToken::kNeq, "!=");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kAdd) {
+                }
+                else if (type == NToken::TokenType::kAdd) {
                     if (next == '=') {
                         pushToken(NToken::kAddAssign, "+=");
                         goto end;
-                    } else if (next == '+') {
+                    }
+                    else if (next == '+') {
                         pushToken(NToken::kInc, "++");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kSub) {
+                }
+                else if (type == NToken::TokenType::kSub) {
                     if (next == '=') {
                         pushToken(NToken::kSubAssign, "-=");
                         goto end;
-                    } else if (next == '-') {
+                    }
+                    else if (next == '-') {
                         pushToken(NToken::kDec, "--");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kMul) {
+                }
+                else if (type == NToken::TokenType::kMul) {
                     if (next == '=') {
                         pushToken(NToken::kMulAssign, "*=");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kDiv) {
+                }
+                else if (type == NToken::TokenType::kDiv) {
                     if (next == '=') {
                         pushToken(NToken::kDivAssign, "/=");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kMod) {
+                }
+                else if (type == NToken::TokenType::kMod) {
                     if (next == '=') {
                         pushToken(NToken::kModAssign, "%=");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kLt) {
+                }
+                else if (type == NToken::TokenType::kLt) {
                     if (next == '=') {
                         pushToken(NToken::kLe, "<=");
                         goto end;
-                    } else if (next == '<') {
+                    }
+                    else if (next == '<') {
                         char third = m_src[m_lex_idx + 2];
                         if (third == '=') {
                             pushToken(NToken::kShlAssign, "<<=");
                             move();  // move extra once below
                             goto end;
-                        } else {
+                        }
+                        else {
                             pushToken(NToken::kShl, "<<");
                             goto end;
                         }
                     }
-                } else if (type == NToken::TokenType::kGt) {
+                }
+                else if (type == NToken::TokenType::kGt) {
                     if (next == '=') {
                         pushToken(NToken::kGe, ">=");
                         goto end;
-                    } else if (next == '>') {
+                    }
+                    else if (next == '>') {
                         char third = m_src[m_lex_idx + 2];
                         if (third == '=') {
                             pushToken(NToken::kShrAssign, ">>=");
                             move();  // move extra once below
                             goto end;
-                        } else {
+                        }
+                        else {
                             pushToken(NToken::kShr, ">>");
                             goto end;
                         }
                     }
-                } else if (type == NToken::TokenType::kBitAnd) {
+                }
+                else if (type == NToken::TokenType::kBitAnd) {
                     if (next == '=') {
                         pushToken(NToken::kAndAssign, "&=");
                         goto end;
-                    } else if (next == '&') {
+                    }
+                    else if (next == '&') {
                         pushToken(NToken::kLAnd, "&&");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kBitOr) {
+                }
+                else if (type == NToken::TokenType::kBitOr) {
                     if (next == '=') {
                         pushToken(NToken::kOrAssign, "|=");
                         goto end;
-                    } else if (next == '|') {
+                    }
+                    else if (next == '|') {
                         pushToken(NToken::kLOr, "||");
                         goto end;
                     }
-                } else if (type == NToken::TokenType::kBitXor) {
+                }
+                else if (type == NToken::TokenType::kBitXor) {
                     if (next == '=') {
                         pushToken(NToken::kXorAssign, "^=");
                         goto end;
                     }
                 }
-            
+
                 m_tokens.push_back(LEX_TOKEN(type, { c }));
                 move();
                 continue;
@@ -182,7 +201,7 @@ namespace neo {
                 //     // 多移动一次
                 //     move();
                 // }
-            }            
+            }
             else if (c == '/') {
                 char next = getChar(m_lex_idx + 1);
                 if (next == '/') {
@@ -266,7 +285,7 @@ namespace neo {
     NToken& NLexer::previousToken()
     {
         m_tk_idx--;
-        if (m_tk_idx < 0) 
+        if (m_tk_idx < 0)
             m_tk_idx = 0;
         return m_tokens[m_tk_idx];
     }
@@ -274,7 +293,7 @@ namespace neo {
 
     NToken& NLexer::peekPrevious()
     {
-        if (m_tk_idx - 1 < 0) 
+        if (m_tk_idx - 1 < 0)
             return NToken::InvalidToken;
         return m_tokens[m_tk_idx - 1];
     }
@@ -285,15 +304,23 @@ namespace neo {
         m_tk_idx++;
         if (m_tk_idx >= m_tokens.size())
             m_tk_idx = m_tokens.size() - 1;
-        return m_tokens[m_tk_idx]; 
+        return m_tokens[m_tk_idx];
     }
 
 
     NToken& NLexer::peekNext()
     {
-        if (m_tk_idx + 1 >= m_tokens.size()) 
+        if (m_tk_idx + 1 >= m_tokens.size())
             return NToken::InvalidToken;
         return m_tokens[m_tk_idx + 1];
+    }
+
+
+    NToken& NLexer::current() {
+        if (m_tk_idx < 0 || m_tk_idx >= m_tokens.size()) {
+            return NToken::InvalidToken;
+        }
+        return m_tokens[m_tk_idx];
     }
 
 
@@ -418,7 +445,7 @@ namespace neo {
                 }
                 move();
             }
-           // pushToken(TokenType::CommentSingleLine, m_src.substr(start, m_lex_idx - start));
+            // pushToken(TokenType::CommentSingleLine, m_src.substr(start, m_lex_idx - start));
             return true;
         }
         /* */

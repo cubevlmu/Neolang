@@ -9,7 +9,10 @@ namespace neo::ast {
     static const char* s_ASTTypeStrings[] = {  
         "kUnknown",
         "kStatment",
-        "kDeclaration"
+        "kDeclaration",
+        "kArrayType",
+        "kPointer",
+        "kTypeRef"
     };
     std::string_view getTypeString(ASTType type) {
         return s_ASTTypeStrings[(int)type];
@@ -26,7 +29,8 @@ namespace neo::ast {
         "kForeach",
         "kReturn",
         "kBreak",
-        "kContinue"
+        "kContinue",
+        "kImport"
     };
     std::string_view getTypeString(StmtKind type) {
         return s_StmtKindStrings[(int)type];
@@ -57,7 +61,10 @@ namespace neo::ast {
         "kClass",
         "kField",
         "kStruct",
-        "kModule"
+        "kModule",
+        "kInterface",
+        "kEnum",
+        "kTopLevelDecls"
     };
     std::string_view getTypeString(DeclKind type) {
         return s_DeclKindStrings[(int)type];
@@ -87,4 +94,10 @@ namespace neo::ast {
     }
 
 
+    ASTDecl::~ASTDecl() {
+        for (auto* ptr : attributes) {
+            delete ptr;
+        }
+        attributes.clear();
+    }
 }

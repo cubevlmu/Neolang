@@ -1,8 +1,8 @@
 project(NeoCompiler)
-
+###################################################################
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_OBJC_STANDARD 17)
-
+###################################################################
 set(INCS 
     "${CMAKE_SOURCE_DIR}/modules/NeoCompiler/src"
 )
@@ -13,32 +13,28 @@ set(DEPS
     ""
 )
 set(HEAD 
-    ""
+    "NE_DEBUG"
 )
-
-InstallFLib(INCS LNKS)
-InstallSpdlog(INCS LNKS)
-
+set(PROJ_NAME NeoCompiler)
+###################################################################
+AddSpdlog(INCS LNKS)
+AddFmt(INCS LNKS)
+###################################################################
 file(GLOB_RECURSE src
     "src/*.m"
     "src/*.cpp"
     "src/*.mm"
     "src/*.c"
 )
-add_executable(NeoCompiler
+add_executable(${PROJ_NAME}
     ${src}
 )
-target_include_directories(NeoCompiler PRIVATE 
+target_include_directories(${PROJ_NAME} PRIVATE
     ${INCS}
 )
-target_link_libraries(NeoCompiler PRIVATE 
+target_link_libraries(${PROJ_NAME} PRIVATE
     ${LNKS}
 )
-target_compile_definitions(NeoCompiler PRIVATE 
-    _XOPEN_SOURCE
-    _LIBCPP_DRIVERKIT
+target_compile_definitions(${PROJ_NAME} PRIVATE
     ${HEAD}
-
-    FLIB_EXTRA_CHECKS
-    FLIB_ENABLE_SIMD
 )

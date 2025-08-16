@@ -1,0 +1,19 @@
+#include "ParsedFile.hpp"
+
+#include "neo/ast/Base.hpp"
+
+namespace neo {
+
+    NParsedFile::NParsedFile() {
+
+    }
+
+
+    void NParsedFile::clearNodes() {
+        for (auto* item : Nodes) {
+            delete item;
+        }
+        Nodes.clear();
+    }
+    
+} // namespace neo

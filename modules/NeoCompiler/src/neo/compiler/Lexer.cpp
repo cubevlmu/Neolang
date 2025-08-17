@@ -62,8 +62,12 @@ namespace neo {
         m_lex_line = 1;
         m_lex_cursor = 1;
 
-        while (m_lex_idx < m_lex_max) {
+        do {
             skipSpace();
+            if (m_lex_idx == m_lex_max) {
+                m_tokens.push_back(LEX_TOKEN(TokenType::kEOF, ""));
+                break;
+            }
 
             char c = m_src[m_lex_idx];
             // lexer logic
@@ -106,6 +110,12 @@ namespace neo {
                 else if (type == TokenType::kMul) {
                     if (next == '=') {
                         pushToken(TokenType::kMulAssign, "*=");
+                        goto end;
+                    }
+                }
+                else if (type == TokenType::kColon) {
+                    if (next == ':') {
+                        pushToken(TokenType::kDoubleColon, "::");
                         goto end;
                     }
                 }
@@ -233,6 +243,10 @@ namespace neo {
                     LogError("Failed to lex text");
                 }
             }
+            else if (c == CHAR_EOF) {
+                m_tokens.push_back(LEX_TOKEN(TokenType::kEOF, ""));
+                break;
+            }
             else {
                 if (isDigit(c)) {
                     bool e = lexNumber();
@@ -257,7 +271,7 @@ namespace neo {
                 }
                 continue;
             }
-        }
+        } while (m_lex_idx < m_lex_max);
 
         return true;
     }
@@ -265,7 +279,7 @@ namespace neo {
 
     void NLexer::debugPrint(NDebugOutput& output)
     {
-        output.write("Lex result for file : ");
+        output.write("Lex result of file : ");
         output.writeLine(m_source->getPath());
         output.writeLine("     ");
         for (auto& tk : m_tokens) {

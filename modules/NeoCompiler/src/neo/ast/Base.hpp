@@ -38,7 +38,7 @@ namespace neo {
             : m_type{ type }
         {
         }
-        virtual ~ASTNode() = default;
+        ~ASTNode() override = default;
 
     public:
         virtual std::string toString() const {
@@ -71,7 +71,8 @@ namespace neo {
         kReturn,
         kBreak,
         kContinue,
-        kImport
+        kImport,
+        kDecl
     };
     std::string_view getTypeString(StmtKind);
 
@@ -145,7 +146,30 @@ namespace neo {
     };
     std::string_view getTypeString(DeclKind);
 
-    
+
+    struct ASTModifier {
+        bool isStatic;
+        bool isFinal;
+        bool isConst;
+        bool isPrivate;
+        bool isProtected;
+        bool isInternal;
+        bool isInline;
+
+        ASTModifier() noexcept;
+        ASTModifier(bool s, bool f, bool c, bool priv, bool prot, bool inter, bool inl) noexcept;
+
+        ASTModifier(const ASTModifier& other) noexcept;
+        ASTModifier& operator=(const ASTModifier& other) noexcept;
+
+        ASTModifier(ASTModifier&& other) noexcept;
+        ASTModifier& operator=(ASTModifier&& other) noexcept;
+
+        bool operator==(const ASTModifier& other) const noexcept;
+        bool operator!=(const ASTModifier& other) const noexcept;
+    };
+
+
     class ASTDecl : public ASTNode 
     {
     public:
@@ -163,6 +187,8 @@ namespace neo {
     public:
         bool isMarkedExport;
         std::vector<Attribute*> attributes;
+
+        ASTModifier modifier;
 
     private:
         DeclKind m_kind;

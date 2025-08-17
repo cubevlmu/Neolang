@@ -6,7 +6,7 @@
 
 namespace neo {
 
-    enum class TokenType {
+    enum class TokenType : u8 {
         kUnknown,       //
         kEOF,           // end of file
 
@@ -71,6 +71,7 @@ namespace neo {
         kComma,       // ,
         kDot,         // .
         kColon,       // :
+        kDoubleColon, // ::
         kSemicolon,   // ;
         kQuestion,    // ?
         kArrow,       // ->

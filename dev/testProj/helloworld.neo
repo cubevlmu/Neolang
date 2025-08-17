@@ -1,0 +1,6 @@
+import std.io;
+
+fun main(args : string[]) {
+    test::a::tt t;
+    println("Hello world");
+}

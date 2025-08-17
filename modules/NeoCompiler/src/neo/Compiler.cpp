@@ -41,16 +41,18 @@ namespace neo {
 
         for (auto& str : out) {
             NSourceDir dir {str.c_str()};
-            m_soruceDirs.push_back(dir);
             if (!dir.collect()) {
                 LogDebug("No source file in dir {}", str);
             }
+            m_soruceDirs.push_back(std::move(dir));
         }
 
         bool r = false;
         for (auto& dir : m_soruceDirs) {
             r |= dir.compile();
         }
+
+        // generate process & link process
 
         t.end();
         if (!r) {

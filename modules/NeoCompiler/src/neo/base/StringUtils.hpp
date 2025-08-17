@@ -12,8 +12,11 @@ namespace neo {
 #define CONCAT_STR(NAME, ...) constexpr const char* NAME = ::neo::concatStr(__VA_ARGS__)
 
     void replaceAll(std::string& str, const char* from, const char* to);
+    void splitStr(std::vector<std::string>& out, const std::string& str, const char* delim, bool skipEmpty = true);
     void splitStr(std::vector<std::string>& out, const std::string& str, char delim, bool skipEmpty = true);
-
+    void splitAt(std::vector<std::string>& out, int pos, const std::string& str);
+    int findLast(const std::string& str, char hint);
+    
     template <typename... T>
     std::string msg(T&&... args) {
         std::ostringstream oss {};

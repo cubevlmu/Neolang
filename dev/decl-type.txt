@@ -1,0 +1,8 @@
+
+module decl
+func decl
+class decl
+var decl
+struct decl
+interface decl
+attribute decl

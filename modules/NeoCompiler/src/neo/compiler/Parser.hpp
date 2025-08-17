@@ -21,9 +21,21 @@ namespace neo {
     };
 
 
+#define APPLY_MODIFIER(V, MD) do { \
+        V->modifier = MD.value();     \
+   } while(false)
+#define APPLY_MODIFIER_RAW(V, MD) do { \
+        V->modifier = std::move(MD);   \
+        MD = ASTModifier {};           \
+   } while(false)
+#define APPLY_ATTRIBUTES(V, AT) do { \
+        V->attributes = std::move(AT); \
+        AT = std::vector<Attribute*>();\
+    } while(false)
+
+
     class NParser
     {
-        struct Modifiers;
     public:
         NParser(NParserArgs args);
         ~NParser();
@@ -52,17 +64,20 @@ namespace neo {
         Expected<ImportStmt*> parseImport();
         Expected<ModuleDecl*> parseModule();
 
-        Expected<TopLevelDecls*> parseDecls();
+        Expected<ASTDecl*> parseDecl();
         Expected<TopLevelDecls*> parseScopeDecls();
 
         Expected<ClassDecl*> parseClass();
+        Expected<EnumDecl*> parseEnum();
+        Expected<InterfaceDecl*> parseInterface();
+        Expected<StructDecl*> parseStruct();
         Expected<FuncDecl*> parseFunc();
+        Expected<VarDecl*> parseVarDecl();
 
-        Expected<FieldDecl*> parseFields();
-        Expected<FuncDecl*> parseFuncs();
+        Expected<FieldDecl*> parseField();
 
         Expected<std::vector<Attribute*>> parseAttributes();
-        Expected<Modifiers> parseModifier();
+        Expected<ASTModifier> parseModifier();
 
         Expected<std::vector<ASTExpr*>> parseFuncCallArgs();
 

@@ -5,6 +5,8 @@
 #include "neo/compiler/Parser.hpp"
 #include "neo/compiler/ParsedFile.hpp"
 #include "neo/base/Logger.hpp"
+#include "neo/base/StringUtils.hpp"
+#include "DebugOutput.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -14,8 +16,8 @@ namespace fs = std::filesystem;
 
 namespace neo {
 
-    NSourceFile::NSourceFile(NSourceDir& s, const std::string_view rp)
-        : m_rPath {rp}
+    NSourceFile::NSourceFile(NSourceDir* s, std::string rp)
+        : m_rPath {std::move(rp)}
         , m_content {}
         , m_dir {s}
     {
@@ -29,7 +31,7 @@ namespace neo {
     bool NSourceFile::readAll()
     {
         std::ifstream stm {};
-        stm.open(m_rPath);
+        stm.open(getPath());
         if (!stm.is_open()) {
             LogError("Failed to read soruce file {}", m_rPath);
             return false;
@@ -61,32 +63,34 @@ namespace neo {
     }
 
     std::string NSourceFile::getPath() const {
-        std::string str {};
-        str.resize(m_dir.getRoot().length() + m_rPath.length() + 1);
-        str.append(m_dir.getRoot());
-        str.append("//");
-        str.append(m_rPath);
-        return str;
+        return concatStr(m_dir->getRoot().data(), "//", m_rPath.c_str());
     }
 
     bool NSourceFile::compile() {
+        if (!readAll()) {
+            return false;
+        }
+
         NLexer lex {this};
         if (!lex.lex()) {
             LogError("Failed to lex file lex.neo");
             return -1;
         }
 
-        NParsedFile file {};
-        NParserArgs args {
-            .lexer = &lex,
-            .file = this,
-            .output = file,
-            .langVer = 1,
-        };
-        NParser parser {args};
-        if (!parser.parse()) {
-            return false;
-        }
+        NFileOutput o {"output_lex.txt"};
+        lex.debugPrint(o);
+
+//        NParsedFile file {};
+//        NParserArgs args {
+//            .lexer = &lex,
+//            .file = this,
+//            .output = file,
+//            .langVer = 1,
+//        };
+//        NParser parser {args};
+//        if (!parser.parse()) {
+//            return false;
+//        }
 
         // Symbol collect pass & analyzer pass
 

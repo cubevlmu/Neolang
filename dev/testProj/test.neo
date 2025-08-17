@@ -1,0 +1,179 @@
+import test;
+import std.types;
+
+// comment test (single)
+/*
+comment test (multi)
+*/
+
+module moduleTest;
+module moduleTest2 {
+    fun test() {}
+    fun test2() {}
+}
+
+fun funTest() {}
+fun funTest2() bool {}
+fun funTest3(args : i32) i32 {}
+
+fun funReturnTest() i32 {
+    return 10;
+}
+
+fun ifTest(args : i32) bool {
+    if (args == 0) {
+        return true;
+    } else if (args == 1) {
+        return false;
+    } else {
+        return false;
+    }
+}
+
+fun varTest() {
+    var a = 10;
+    val b = 100;
+    var a1 : i32;
+    val b1 : i32;
+    var a2 : i32 = 1000;
+    val b2 : i32 = 10000;
+}
+
+fun forTest() i32 {
+    var idx : i32 = 0;
+    for (i : i32; i < 100; i++) {
+        idx += i;
+    }
+
+    while (idx < 10000) {
+        idx += 1000;
+    }
+
+    return idx;
+}
+
+class classTest {
+    ctor() {}
+    dtor() {}
+
+    fun classMember() {}
+
+    fun getTest2() i32 {
+        return 100;
+    }
+    fun getTest3() i32 {
+        return 100;
+    }
+    fun setTest3(value : i32) 
+    { }
+
+    field fieldTest : i32 {,}
+    field fieldTest2 : i32 {getTest2,}
+    field fieldTest3 : i32 {getTest3, setTest3}
+
+    var classVar : i32;
+    val classVal : i32;
+    var classVarDef : i32 = 10;
+    val classValDef : i32 = 100;
+    var classVarDef2 = 1000;
+    val classValDef2 = 10000;
+
+    static var staticVar : i32;
+    static fun createTest() classTest {
+        return classTest();
+    }
+
+    private fun privateFunc() {}
+    protected fun protectedFunc() {}
+
+    private var privateVar : i32;
+    private field privateField : i32 {,}
+
+    internal fun intFun3() {}
+}
+
+struct StructTest {
+    var1 : i32,
+    var2 : i32 = 10
+}
+
+interface InterfaceTest {
+    interfaceItem1() : i32,
+    interfaceItem2(args : i32) : i32,
+}
+
+[Deprecated("Test attribute")]
+fun attrTest() {}
+
+enum EnumTest {
+    kUnknown,
+    kTest
+}
+
+enum EnumTest2 : u8 {
+    kTest1 = 10,
+    kTest2
+}
+
+class OOPTestBase {
+    ctor(val : i32) {}
+
+    virtual fun virtualFunc1() {}
+    virtual fun virtualFunc2();
+}
+
+final class OOPTest : OOPTestBase, InterfaceTest {
+    ctor(val : i32) 
+        : OOPTestBase(val) 
+    {
+    }
+
+    override fun virtualFunc2() {
+
+    }
+
+    impl fun interfaceItem1() : i32 {
+        return 10;
+    }
+    impl fun interfaceItem2(args : i32) : i32 {
+        return 10;
+    }
+
+    fun print() {
+        Console.println("Test");
+    }
+}
+
+[Attribute("TestAttribute")]
+const fun attributeDef(default : const string) {
+
+}
+
+inline fun testInline() {}
+export fun testExport() {}
+
+var globalVarTest : i32;
+val globalValTest : i32 = 10;
+
+
+fun tryCatchTest() {
+    try {
+        throw Exception("Test");
+    } catch(e : Exception) {
+        Console.println(e.Message);
+        e.printStackTrace();
+    }
+}
+
+/* fun testTemplate<T>(T t) {
+    t.print();
+}
+fun testTemplate2<T : OOPTestBase>(T t) {
+    t.print();
+}
+
+fun testT2() {
+    val obj = new OOPTest();
+    testTemplate(obj);
+}
+*/

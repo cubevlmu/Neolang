@@ -8,7 +8,7 @@ namespace neo {
     class NSourceFile final
     {
     public:
-        NSourceFile(class NSourceDir& dir, const std::string_view rPath);
+        NSourceFile(class NSourceDir* dir, std::string rPath);
         ~NSourceFile();
 
         bool readAll();
@@ -19,9 +19,9 @@ namespace neo {
         bool compile();
 
     private:
-        std::string_view m_rPath;
+        std::string m_rPath;
         std::string m_content;
-        NSourceDir& m_dir;
+        NSourceDir* m_dir;
     };
 
 }

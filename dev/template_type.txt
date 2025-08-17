@@ -1,0 +1,9 @@
+
+[CompileTimeOnly] // only in nlib file, never output to dynamic lib or executable file
+fun __moduleTest__testTemplate([$compiler__template$1] t) {
+    __[$compiler__template$1]__print(t);
+}
+
+func __moduleTest__testTemplate__moduleTest__OOPTest__(OOPTest t) {
+    __moduleTest__OOPTest__print(t);
+}

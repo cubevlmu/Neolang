@@ -155,4 +155,17 @@ namespace neo {
         const std::string moduleName;
     };
 
+
+    class DeclStmt : public ASTStmt
+    {
+    public:
+        DeclStmt(ASTDecl* decl)
+            : ASTStmt(StmtKind::kDecl)
+            , declType {decl}
+        {}
+        ~DeclStmt() override = default;
+
+    public:
+        ASTDecl* declType;
+    };
 }

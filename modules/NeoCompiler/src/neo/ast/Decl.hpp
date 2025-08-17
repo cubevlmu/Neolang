@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "Base.hpp"
 #include "Type.hpp"
 
@@ -30,23 +32,21 @@ namespace neo {
     class FuncDecl : public ASTDecl
     {
     public:
-        FuncDecl(const std::string_view& name, ASTTypeNode* retType, std::vector<VarDecl*> args, class CompoundStmt* body = nullptr, ASTDecl* parent = nullptr)
+        FuncDecl(const std::string_view& name, ASTTypeNode* retType, std::vector<VarDecl*> args, class CompoundStmt* body = nullptr)
             : ASTDecl(DeclKind::kFunc)
             , name{ name }
             , returnType{ retType }
-            , args{ args }
+            , args{std::move( args )}
             , funcBody{ body }
-            , parent{ parent }
         {
         }
-        ~FuncDecl() = default;
+        ~FuncDecl() override = default;
 
     public:
         std::string name;
         ASTTypeNode* returnType;
         std::vector<VarDecl*> args;
         CompoundStmt* funcBody;
-        ASTDecl* parent = nullptr;
 
         bool isMarkedExtern;
         bool isMarkedInline;
@@ -59,18 +59,22 @@ namespace neo {
     class FieldDecl : public ASTDecl
     {
     public:
-        FieldDecl(const std::string_view& name, ASTTypeNode* type, ASTDecl* parent, ASTExpr* init = nullptr)
+        FieldDecl(const std::string_view& name, ASTTypeNode* type, ASTExpr* init = nullptr, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kField)
             , name{ name }
             , parent{ parent }
             , type{ type }
             , init{ init }
+            , setFuncName{}
+            , getFuncName{}
         {
         }
-        ~FieldDecl() = default;
+        ~FieldDecl() override = default;
 
     public:
         std::string name;
+        std::string setFuncName;
+        std::string getFuncName;
         ASTDecl* parent;
         ASTTypeNode* type;
         ASTExpr* init = nullptr;
@@ -83,16 +87,16 @@ namespace neo {
         ClassDecl(const std::string_view& name, std::vector<ASTTypeNode*> baseClasses, ASTDecl* parent = nullptr)
             : ASTDecl(DeclKind::kClass)
             , name{ name }
-            , baseClasses{ baseClasses }
+            , baseClasses{std::move( baseClasses )}
             , parent{ parent }
         {
         }
-        ~ClassDecl() = default;
+        ~ClassDecl() override = default;
 
     public:
         std::string name;
         std::vector<ASTTypeNode*> baseClasses;
-        std::vector<ASTDecl*> subClasses;
+        std::vector<ASTDecl*> subDataTypes;
         std::vector<FieldDecl*> fields;
         std::vector<VarDecl*> variables;
         std::vector<FuncDecl*> functions;
@@ -111,7 +115,7 @@ namespace neo {
             , parent{ parent }
         {
         }
-        ~StructDecl() = default;
+        ~StructDecl() override = default;
 
     public:
         std::string name;
@@ -130,7 +134,7 @@ namespace neo {
             , parent{ parent }
         {
         }
-        ~InterfaceDecl();
+        ~InterfaceDecl() override;
 
     public:
         std::string name;
@@ -146,13 +150,15 @@ namespace neo {
             : ASTDecl(DeclKind::kEnum)
             , name{ name }
             , parent{ parent }
+            , baseType{nullptr}
         {
         }
-        ~EnumDecl();
+        ~EnumDecl() override;
 
     public:
         std::string name;
         std::vector<VarDecl*> children;
+        ASTTypeNode* baseType;
         ASTDecl* parent = nullptr;
     };
 
@@ -166,7 +172,7 @@ namespace neo {
             , name{ name }
         {
         }
-        ~ModuleDecl();
+        ~ModuleDecl() override;
 
     public:
         class TopLevelDecls* children;
@@ -181,7 +187,7 @@ namespace neo {
         TopLevelDecls()
             : ASTDecl(DeclKind::kTopLevelDecls)
         {}
-        ~TopLevelDecls();
+        ~TopLevelDecls() override;
     
     public:
         std::vector<ASTDecl*> decls;

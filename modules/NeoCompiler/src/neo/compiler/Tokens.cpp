@@ -68,6 +68,7 @@ namespace neo {
             "Comma",       // kComma
             "Dot",         // kDot
             "Colon",       // kColon
+            "DoubleColon", // kDoubleColon
             "Semicolon",   // kSemicolon
             "Question",    // kQuestion
             "Arrow",       // kArrow

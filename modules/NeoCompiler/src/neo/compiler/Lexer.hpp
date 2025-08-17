@@ -8,11 +8,12 @@
 
 namespace neo {
 
-    const char CHAR_EOF = 0;
-    const char CHAR_CR = '\r';
-    const char CHAR_LF = '\n';
-    const char CHAR_SPACE = ' ';
-    const char CHAR_TAB = '\t';
+    constexpr char CHAR_EOF = 0;
+    constexpr char CHAR_CR = '\r';
+    constexpr char CHAR_LF = '\n';
+    constexpr char CHAR_SPACE = ' ';
+    constexpr char CHAR_TAB = '\t';
+
 #if NE_WINDOWS
 #define IS_NEW_LINE(C) (C == '\n' || C == '\r')
 #else
@@ -59,7 +60,7 @@ namespace neo {
 
     private:
         NE_FORCE_INLINE void skipSpace() {
-            while (m_lex_idx < m_lex_max) {
+            do {
                 char c = m_src[m_lex_idx];
                 if (!isspace(c)) {
                     break;
@@ -72,7 +73,7 @@ namespace neo {
 
                 m_lex_idx++;
                 m_lex_cursor++;
-            }
+            } while (m_lex_idx < m_lex_max);
         }
         NE_FORCE_INLINE std::string subString(u32 idx, u32 len) {
             return idx < m_lex_max && idx + len < m_lex_max ?

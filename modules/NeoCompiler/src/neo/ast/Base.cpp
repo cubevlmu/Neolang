@@ -100,4 +100,65 @@ namespace neo {
         }
         attributes.clear();
     }
+
+
+    ASTModifier::ASTModifier() noexcept
+            : isStatic(false), isFinal(false), isConst(false),
+              isPrivate(false), isProtected(false), isInternal(false), isInline(false) {}
+
+    ASTModifier::ASTModifier(bool s, bool f, bool c, bool priv, bool prot, bool inter, bool inl) noexcept
+            : isStatic(s), isFinal(f), isConst(c),
+              isPrivate(priv), isProtected(prot), isInternal(inter), isInline(inl) {}
+
+    ASTModifier::ASTModifier(const ASTModifier& other) noexcept
+            : isStatic(other.isStatic), isFinal(other.isFinal), isConst(other.isConst),
+              isPrivate(other.isPrivate), isProtected(other.isProtected),
+              isInternal(other.isInternal), isInline(other.isInline) {}
+
+    ASTModifier& ASTModifier::operator=(const ASTModifier& other) noexcept {
+        if (this != &other) {
+            isStatic = other.isStatic;
+            isFinal = other.isFinal;
+            isConst = other.isConst;
+            isPrivate = other.isPrivate;
+            isProtected = other.isProtected;
+            isInternal = other.isInternal;
+            isInline = other.isInline;
+        }
+        return *this;
+    }
+
+    ASTModifier::ASTModifier(ASTModifier&& other) noexcept
+            : isStatic(other.isStatic), isFinal(other.isFinal), isConst(other.isConst),
+              isPrivate(other.isPrivate), isProtected(other.isProtected),
+              isInternal(other.isInternal), isInline(other.isInline) {
+        // 对 bool 来说不需要清空 other
+    }
+
+    ASTModifier& ASTModifier::operator=(ASTModifier&& other) noexcept {
+        if (this != &other) {
+            isStatic = other.isStatic;
+            isFinal = other.isFinal;
+            isConst = other.isConst;
+            isPrivate = other.isPrivate;
+            isProtected = other.isProtected;
+            isInternal = other.isInternal;
+            isInline = other.isInline;
+        }
+        return *this;
+    }
+
+    bool ASTModifier::operator==(const ASTModifier& other) const noexcept {
+        return isStatic == other.isStatic &&
+               isFinal == other.isFinal &&
+               isConst == other.isConst &&
+               isPrivate == other.isPrivate &&
+               isProtected == other.isProtected &&
+               isInternal == other.isInternal &&
+               isInline == other.isInline;
+    }
+
+    bool ASTModifier::operator!=(const ASTModifier& other) const noexcept {
+        return !(*this == other);
+    }
 }

@@ -127,11 +127,11 @@ namespace neo {
         std::vector<NToken> m_tokens;
         NSourceFile* m_source;
 
-        u32 m_tk_idx = 0;
-        u32 m_lex_line = 0;
-        u32 m_lex_idx = 0;
-        u32 m_lex_max = 0;
-        u32 m_lex_cursor = 0;
+        psize m_tk_idx = 0;
+        psize m_lex_line = 0;
+        psize m_lex_idx = 0;
+        psize m_lex_max = 0;
+        psize m_lex_cursor = 0;
 
         const static std::map<char, TokenType> s_token_types;
     };

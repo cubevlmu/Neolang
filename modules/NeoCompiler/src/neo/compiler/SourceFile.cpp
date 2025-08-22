@@ -80,17 +80,28 @@ namespace neo {
         NFileOutput o {"output_lex.txt"};
         lex.debugPrint(o);
 
-//        NParsedFile file {};
-//        NParserArgs args {
-//            .lexer = &lex,
-//            .file = this,
-//            .output = file,
-//            .langVer = 1,
-//        };
-//        NParser parser {args};
-//        if (!parser.parse()) {
-//            return false;
-//        }
+        NParsedFile file {};
+        NParserArgs args {
+            .lexer = &lex,
+            .file = this,
+            .output = file,
+            .langVer = 1,
+        };
+        NParser parser {args};
+#if NE_DEBUG
+        if (!parser.debugParse()) {
+            return false;
+        }
+        NConsoleOutput op {};
+        for (const auto &item: file.Nodes) {
+            item->debugPrint(op);
+            op.writeLine("");
+        }
+#else
+        if (!parser.parse()) {
+            return false;
+        }
+#endif
 
         // Symbol collect pass & analyzer pass
 

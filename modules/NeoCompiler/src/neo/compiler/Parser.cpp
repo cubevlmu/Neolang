@@ -53,6 +53,7 @@ namespace neo {
         TokenType::kPrivate,
     };
 
+#define CHECK_MODIFIER(ITEM, ITEM_NAME) if (ITEM) { return Result::failure("duplicated modifier "#ITEM_NAME); }
 #define ERRR() &m_diag, current(), m_args.file
 #define CLEARUP(V) \
 do { \
@@ -107,93 +108,35 @@ do { \
     {
         auto& output = m_args.output;
 
-        while (!m_lexer->expectToken(TokenType::kEOF)) {
+        do {
             if (check(TokenType::kImport)) {
                 auto p_import_Ret = parseImport();
                 CHECK_ERROR(p_import_Ret);
                 output.Nodes.push_back(p_import_Ret.value());
+            }
+            else if (check(TokenType::kEOF)) {
+                advance();
+                break;
             }
             else {
                 auto r = parseDecl();
                 CHECK_ERROR(r);
                 output.Nodes.push_back(r.value());
             }
-        }
+        } while (true);
 
-        return Error::success();
+        return Result::success();
     }
 
-    // common type paring function
-    // dealing normal type & array type & pointer type
-    Expected<ASTTypeNode*> NParser::parseType()
-    {
-        if (!check(TokenType::kIdentifier)) {
-            return nullptr;
-        }
 
-        // get full type string including module and type
-        std::string typeStr;
-        do {
-            if (check(TokenType::kIdentifier)) {
-                typeStr.append(current().value);
-                if (expect(TokenType::kDoubleColon)) {
-                    typeStr.append("::");
-                    advance();
-                } else {
-                    break;
-                }
-            }
-        } while(true);
-
-        std::vector<std::string> hints {};
-        splitStr(hints, typeStr, "::");
-        std::string moduleStr;
-
-        moduleStr = typeStr.erase(typeStr.find_last_of("::"));
-        typeStr = typeStr.erase(0, typeStr.find_last_of("::") + 2);
-
-        if (expect(TokenType::kLBracket)) {
-            // parse array type's bracket and check array dimenssion
-
-            ScopeGuard<ASTArrayType> gd {new ASTArrayType(std::move(moduleStr), std::move(typeStr), false, {})};
-            do {
-                advance();
-                if (check(TokenType::kIntLit)) {
-                    gd->size.push_back(std::stoi(current().value));
-                    continue;
-                } else if (check(TokenType::kComma)) {
-                    advance();
-                    continue;
-                } else if (check(TokenType::kRBracket)) {
-                    advance();
-                    break;
-                } else {
-                    return Error::failure("Unexpected token found in array type brackets -> ]' or not closed.", ERRR());
-                }
-            } while(true);
-            gd->dimenssion = (i32)gd->size.size();
-            if (gd->size.empty()) {
-                gd->isReceiver = true;
-            }
-            return gd.getPtr();
-
-        } else if (expect(TokenType::kMul)) {
-            // parse pointer type
-
-            return new ASTPointerType(std::move(moduleStr), std::move(typeStr));
-        } else {
-            // normal type just return
-
-            return new ASTTypeNode(std::move(moduleStr), std::move(typeStr));
-        }
-    }
 
     // import statement parser
     // suppoting module string lit like "aaa.bbb.ccc"
+    // TESTED
     Expected<ImportStmt*> NParser::parseImport()
     {
         if (!check(TokenType::kImport)) {
-            return Error::failure(msg("unexpected token '", current().typeString(), "' for import expression"), &m_diag, current(), m_args.file);
+            return Result::failure(msg("unexpected token '", current().typeString(), "' for import expression"), &m_diag, current(), m_args.file);
         }
         std::string moduleName;
 
@@ -212,7 +155,7 @@ do { \
             }
             else {
                 // invalid types...
-                return Error::failure(msg("unexpected token '", current().typeString(), "' for module name"), ERRR());
+                return Result::failure(msg("unexpected token '", current().typeString(), "' for module name"), ERRR());
             }
         } while (true);
 
@@ -221,6 +164,7 @@ do { \
 
     // module declare parser
     // support syntax like "module aaa;" or "module bbb {...}"
+    // TESTED
     Expected<ModuleDecl*> NParser::parseModule()
     {
         if (!check(TokenType::kModule)) {
@@ -243,15 +187,16 @@ do { \
                 break;
             }
             else {
-                return Error::failure(msg("unexpected token '", current().typeString(), "' for module declare"), ERRR());
+                return Result::failure(msg("unexpected token '", current().typeString(), "' for module declare"), ERRR());
             }
         } while (true);
+        auto gd = ScopeGuard(new ModuleDecl(module));
 
         if (check(TokenType::kSemicolon)) {
             // top level module decl
             // trigger decl parsing logic and make those decls as module's children
 
-            auto gd = ScopeGuard(new ModuleDecl(module, nullptr));
+            gd->children = new TopLevelDecls();
             do {
                 advance();
                 if (check(TokenType::kEOF)) {
@@ -263,61 +208,30 @@ do { \
                     gd->children->decls.push_back(r.value());
                 }
             } while(true);
-            return gd.getPtr();
         }
-        else if (expect(TokenType::kLBraces)) {
+        else if (check(TokenType::kLBraces)) {
             // scope-based module decl
             // trigger scope decl parsing logic and make those decls as module's children
 
             auto r = parseScopeDecls();
-            if (!r) {
-                delete r.value();
-                return r.error();
-            }
-            auto ptr = new ModuleDecl(module, nullptr);
-            ptr->children = r.value();
-            return ptr;
+            CHECK_ERROR(r);
+            gd->children = r.value();
         }
         else {
             // invalid syntax
-            return Error::failure(msg("expect ';' or '{' behind module declare statement, but found '", current().typeString(), "'"), ERRR());
-        }
-    }
-
-    // fuction calling expression's argument list parser
-    // syntax like xxx(aa,bb,cc,...)
-    Expected<std::vector<ASTExpr*>> NParser::parseFuncCallArgs()
-    {
-        std::vector<ASTExpr*> args{};
-        if (!check(TokenType::kLParen)) {
-            return args;
+            return Result::failure(msg("expect ';' or '{' behind module declare statement, but found '", current().typeString(), "'"), ERRR());
         }
 
-        do {
-            advance();
-            if (check(TokenType::kComma)) {
-                advance();
-            } else if (check(TokenType::kRParen)) {
-                advance();
-                break;
-            } else {
-                auto r = parseExpr();
-                if (!r) {
-                    return r.error();
-                }
-                args.push_back(r.value());
-            }
-        } while (true);
-
-        return args;
+        return gd.getPtr();
     }
 
     // function declaration parser
     // syntax like xxx fun xxx(...) xxx {...}
+    // TESTED
     Expected<FuncDecl*> NParser::parseFunc()
     {
         if (!check(TokenType::kFun) && expect(TokenType::kIdentifier)) {
-            return Error::failure(msg("unexpected token for function declare : ", current().value, " ", peek().value), ERRR());
+            return Result::failure(msg("unexpected token for function declare : ", current().value, " ", peek().value), ERRR());
         }
         advance();
 
@@ -325,71 +239,13 @@ do { \
         std::string name = current().value;
 
         if (!expect(TokenType::kLParen)) {
-            return Error::failure(msg("function declare expect '(' for function arguments but got '", peek().value, "'"), ERRR());
+            return Result::failure(msg("function declare expect '(' for function arguments but got '", peek().value, "'"), ERRR());
         }
         advance();
 
-        // function argument parsing logic
-        std::vector<VarDecl*> args{};
-        std::vector<Attribute*> attrs{};
-
-        do {
-            advance();
-            if (check(TokenType::kLBracket)) {
-                // parse attributes
-
-                auto att = parseAttributes();
-                CHECK_ERROR(att);
-                attrs = att.value();
-            }
-            if (check(TokenType::kIdentifier) && expect(TokenType::kColon)) {
-                auto r = parseModifier();
-                CHECK_ERROR(r);
-                auto md = r.value();
-
-                std::string& arg_name = current().value;
-                advance();
-                if (!expect(TokenType::kIdentifier)) {
-                    advance();
-                    return Error::failure(msg("expect type identifier for function argument, but receive '", current().value, "'"), ERRR());
-                }
-                advance();
-                auto t = parseType();
-                CHECK_ERROR(t);
-
-                if (check(TokenType::kEq)) {
-                    advance();
-                    auto epr = parseExpr();
-                    CHECK_ERROR(epr);
-                    args.push_back(new VarDecl(arg_name, t.value(), epr.value()));
-                    args.back()->attributes = std::move(attrs);
-                    args.back()->modifier = std::move(md);
-                    attrs = std::vector<Attribute*>{};
-
-                    continue;
-                } else if (check(TokenType::kComma)) {
-                    advance();
-                    args.push_back(new VarDecl(arg_name, t.value()));
-                    args.back()->attributes = std::move(attrs);
-                    args.back()->modifier = std::move(md);
-                    attrs = std::vector<Attribute*>{};
-
-                    continue;
-                } else {
-                    return Error::failure("unexpected expression after function argument declareation \"xxx : xxx [xxx] -> ...\"", ERRR());
-                }
-            } else if (check(TokenType::kComma)) {
-                // skip comma
-
-                advance();
-                continue;
-            } else if (check(TokenType::kRParen)) {
-                // end loop when matched ')'
-
-                advance();
-                break;
-            }
-        } while (true);
+        // function argument parsing
+        auto args = parseFuncArgs();
+        CHECK_ERROR(args);
 
         // function return type parsing
         ASTTypeNode* returnType = nullptr;
@@ -403,7 +259,7 @@ do { \
         if (check(TokenType::kSemicolon)) {
             // end with ';' just return
 
-            return new FuncDecl(name, returnType, std::move(args), nullptr);
+            return new FuncDecl(name, returnType, args.value(), nullptr);
         }
         else if (check(TokenType::kLBraces)) {
             // end with '{'
@@ -425,10 +281,175 @@ do { \
                 }
             } while(true);
 
-            return new FuncDecl(name, returnType, std::move(args), new CompoundStmt(std::move(bodyStmts)));
+            return new FuncDecl(name, returnType, args.value(), new CompoundStmt(std::move(bodyStmts)));
         } else {
-            return Error::failure("unexpected token after function head", ERRR());
+            return Result::failure("unexpected token after function head", ERRR());
         }
+    }
+
+    // common type paring function
+    // dealing normal type & array type & pointer type
+    // TESTED
+    Expected<ASTTypeNode*> NParser::parseType()
+    {
+        if (!check(TokenType::kIdentifier)) {
+            return nullptr;
+        }
+
+        // get full type string including module and type
+        std::string typeStr;
+        typeStr.append(current().value);
+        advance();
+
+        while (check(TokenType::kDot)) {
+            advance(); // eat dot
+
+            if (!check(TokenType::kIdentifier)) {
+                return Result::failure("expected identifier after '.' in type name", ERRR());
+            }
+
+            typeStr.append(".");
+            typeStr.append(current().value);
+            advance();
+        }
+
+        if (check(TokenType::kLBracket)) {
+            // parse array type's bracket and check array dimenssion
+
+            advance(); // eat left bracket '['
+            ScopeGuard<ASTArrayType> gd {new ASTArrayType(std::move(typeStr), false, {})};
+            do {
+                if (check(TokenType::kIntLit)) {
+                    gd->size.push_back(std::stoi(current().value));
+                    advance();
+                    continue;
+                } else if (check(TokenType::kComma)) {
+                    advance();
+                    continue;
+                } else if (check(TokenType::kRBracket)) {
+                    advance();
+                    break;
+                } else {
+                    return Result::failure("Unexpected token found in array type brackets -> ]' or not closed.", ERRR());
+                }
+            } while(true);
+            gd->dimenssion = (i32)gd->size.size();
+            if (gd->size.empty()) {
+                gd->isReceiver = true;
+            }
+            return gd.getPtr();
+
+        } else if (check(TokenType::kMul)) {
+            // parse pointer type
+
+            advance();
+            return new ASTPointerType(std::move(typeStr));
+        } else {
+            // normal type just return
+
+            return new ASTTypeNode(std::move(typeStr));
+        }
+    }
+
+
+
+    // fuction calling expression's argument list parser
+    // syntax like xxx(aa,bb,cc,...)
+    Expected<std::vector<ASTExpr*>> NParser::parseFuncCallArgs()
+    {
+        std::vector<ASTExpr*> args{};
+        if (!check(TokenType::kLParen)) {
+            return args;
+        }
+
+        do {
+            advance();
+            if (check(TokenType::kComma)) {
+                advance();
+            } else if (check(TokenType::kRParen)) {
+                advance();
+                break;
+            } else {
+                auto r = parseExpr();
+                CHECK_ERROR(r);
+                args.push_back(r.value());
+            }
+        } while (true);
+
+        return args;
+    }
+
+    // function's argument parser
+    // syntax like (xx : xx, xx : xx = xx, ...)
+    Expected<std::vector<VarDecl *>> NParser::parseFuncArgs() {
+        // function argument parsing logic
+        std::vector<VarDecl*> args{};
+        std::vector<Attribute*> attrs{};
+
+        advance(); // eat left paren '('
+        do {
+            if (check(TokenType::kLBracket)) {
+                // parse attributes
+
+                auto att = parseAttributes();
+                CHECK_ERROR(att);
+                attrs = att.value();
+            }
+            if (check(TokenType::kIdentifier) && expect(TokenType::kColon)) {
+                auto r = parseModifier();
+                CHECK_ERROR(r);
+                auto md = r.value();
+
+                std::string& arg_name = current().value;
+                advance();
+                if (!expect(TokenType::kIdentifier)) {
+                    advance();
+                    return Result::failure(msg("expect type identifier for function argument, but receive '", current().value, "'"), ERRR());
+                }
+                advance();
+                auto t = parseType();
+                CHECK_ERROR(t);
+
+                if (check(TokenType::kEq)) {
+                    advance();
+                    auto epr = parseExpr();
+                    CHECK_ERROR(epr);
+                    args.push_back(new VarDecl(arg_name, t.value(), epr.value()));
+                    args.back()->attributes = std::move(attrs);
+                    args.back()->modifier = std::move(md);
+                    attrs = std::vector<Attribute*>{};
+
+                    continue;
+                } else if (check(TokenType::kComma) || check(TokenType::kRParen)) {
+                    args.push_back(new VarDecl(arg_name, t.value()));
+                    args.back()->attributes = std::move(attrs);
+                    args.back()->modifier = std::move(md);
+                    attrs = std::vector<Attribute*>{};
+
+                    // only break when meet ')'
+                    if (check(TokenType::kRParen)) {
+                        advance();
+                        break;
+                    }
+                    advance();
+                    continue;
+                } else {
+                    return Result::failure("unexpected expression after function argument declareation \"xxx : xxx [xxx] -> ...\"", ERRR());
+                }
+            } else if (check(TokenType::kComma)) {
+                // skip comma
+
+                advance();
+                continue;
+            } else if (check(TokenType::kRParen)) {
+                // end loop when matched ')'
+
+                advance();
+                break;
+            }
+        } while (true);
+
+        return args;
     }
 
     // declaration parser
@@ -436,14 +457,13 @@ do { \
     Expected<TopLevelDecls*> NParser::parseScopeDecls()
     {
         if (!check(TokenType::kLBraces)) {
-            return Error::failure("trying parse declare scope but not in a scope", ERRR());
+            return nullptr;
         }
         advance();
 
         // parse content logic
         auto gd = ScopeGuard(new TopLevelDecls());
         do {
-            advance();
             if (check(TokenType::kRBraces)) {
                 advance();
                 break;
@@ -462,36 +482,43 @@ do { \
     Expected<ASTModifier> NParser::parseModifier()
     {
         ASTModifier mf{};
-        previous();
 
         do {
+            if (std::find(&s_modifier[0], &s_modifier[7], current().type) == &s_modifier[7]) {
+                break;
+            }
+
+            switch (current().type)
+            {
+                case TokenType::kPrivate:
+                    CHECK_MODIFIER(mf.isPrivate, "private")
+                    mf.isPrivate = true;
+                    break;
+                case TokenType::kProtected:
+                    CHECK_MODIFIER(mf.isProtected, "protected")
+                    mf.isProtected = true;
+                    break;
+                case TokenType::kInternal:
+                    CHECK_MODIFIER(mf.isInternal, "internal")
+                    mf.isInternal = true;
+                    break;
+                case TokenType::kInline:
+                    CHECK_MODIFIER(mf.isInline, "inline")
+                    mf.isInline = true;
+                    break;
+                case TokenType::kStatic:
+                    CHECK_MODIFIER(mf.isStatic, "static")
+                    mf.isStatic = true;
+                    break;
+                case TokenType::kConst:
+                    CHECK_MODIFIER(mf.isConst, "const")
+                    mf.isConst = true;
+                    break;
+                default:break;
+            }
+
             advance();
-            if (check(TokenType::kPrivate)) {
-                mf.isPrivate = true;
-            }
-            else if (check(TokenType::kProtected)) {
-                mf.isProtected = true;
-            }
-            else if (check(TokenType::kInternal))
-            {
-                mf.isInternal = true;
-            }
-            else if (check(TokenType::kInline))
-            {
-                mf.isInline = true;
-            }
-            else if (check(TokenType::kStatic))
-            {
-                mf.isStatic = true;
-            }
-            else if (check(TokenType::kConst))
-            {
-                mf.isConst = true;
-            }
-            else {
-                return mf;
-            }
-        } while (std::find(&s_modifier[0], &s_modifier[7], peek().type));
+        } while (true);
 
         return mf;
     }
@@ -528,7 +555,7 @@ do { \
                 g->arguments.swap(r.value());
                 if (!expect(TokenType::kRBracket)) {
                     CLEARUP(attrs);
-                    return Error::failure(msg("expect ']' to close attribute attach but got '", current().value, "'"), ERRR());
+                    return Result::failure(msg("expect ']' to close attribute attach but got '", current().value, "'"), ERRR());
                 }
                 attrs.push_back(g.getPtr());
             }
@@ -537,7 +564,7 @@ do { \
             }
             else {
                 CLEARUP(attrs);
-                return Error::failure(msg("unexpect token '", current().value, "' after attribute attach's name"), ERRR());
+                return Result::failure(msg("unexpect token '", current().value, "' after attribute attach's name"), ERRR());
             }
         } while (expect(TokenType::kLBracket));
 
@@ -623,7 +650,7 @@ do { \
             return p_var_Ret.value();
         }
         else {
-            return Error::failure(msg("unexpected token '", current().typeString(), "' found"), ERRR());
+            return Result::failure(msg("unexpected token '", current().typeString(), "' found"), ERRR());
         }
     }
 
@@ -638,7 +665,7 @@ do { \
 
         // class name parsing
         if (!check(TokenType::kIdentifier)) {
-            return Error::failure(msg("expected identifier for class name but got : '", current().typeString(), "'"), ERRR());
+            return Result::failure(msg("expected identifier for class name but got : '", current().typeString(), "'"), ERRR());
         }
         std::string name = current().value;
 
@@ -677,7 +704,7 @@ do { \
                 goto end;
             }
             else {
-                return Error::failure(msg("unexpect token '", current().typeString(), "' for class declare"), ERRR());
+                return Result::failure(msg("unexpect token '", current().typeString(), "' for class declare"), ERRR());
             }
         }
         else if (check(TokenType::kLBraces)) {
@@ -687,7 +714,7 @@ do { \
             goto end;
         }
         else {
-            return Error::failure(msg("unexpect token '", current().typeString(), "' for class declare"), ERRR());
+            return Result::failure(msg("unexpect token '", current().typeString(), "' for class declare"), ERRR());
         }
 
     parseBody:
@@ -722,7 +749,7 @@ do { \
                     gd->ctors.push_back(r.value());
                 } else if (type == 2) {
                     if (gd->dtors != nullptr)
-                        return Error::failure("redefined destructor.", ERRR());
+                        return Result::failure("redefined destructor.", ERRR());
                     gd->dtors = r.value();
                 } else {
                     gd->functions.push_back(r.value());
@@ -767,7 +794,7 @@ do { \
                     gd->variables.push_back(dVar);
                 }
                 else {
-                    return Error::failure("unexpected type declared in class body", ERRR());
+                    return Result::failure("unexpected type declared in class body", ERRR());
                 }
             }
         } while (true);
@@ -787,8 +814,8 @@ do { \
         advance();
 
         // parse variable name
-        if (check(TokenType::kIdentifier)) {
-            return Error::failure("unexpected token found after var/val : var xxx <--", ERRR());
+        if (!check(TokenType::kIdentifier)) {
+            return Result::failure("unexpected token found after var/val : var xxx <--", ERRR());
         }
         std::string_view name = current().value;
         advance();
@@ -797,6 +824,7 @@ do { \
         if (check(TokenType::kColon)) {
             // parse type hint
 
+            advance();
             auto r = parseType();
             CHECK_ERROR(r);
             gd->type = r.value();
@@ -816,11 +844,11 @@ do { \
 
             // check end of line
             if (!check(TokenType::kSemicolon)) {
-                return Error::failure("expression line is not closed : var xxx = xxx <-- need ';' to closed", ERRR());
+                return Result::failure("expression line is not closed : var xxx = xxx <-- need ';' to closed", ERRR());
             }
         }
         else {
-            return Error::failure("variable declare without type hint is not allow! var xxx ... <--", ERRR());
+            return Result::failure("variable declare without type hint is not allow! var xxx ... <--", ERRR());
         }
 
         return gd.getPtr();
@@ -836,7 +864,7 @@ do { \
 
         // parse enum name
         if (!check(TokenType::kIdentifier)) {
-            return Error::failure("unexpected token after enum token : enum xxx <--", ERRR());
+            return Result::failure("unexpected token after enum token : enum xxx <--", ERRR());
         }
         std::string_view name = current().value;
         advance();
@@ -861,7 +889,7 @@ do { \
                 return gd.getPtr();
             }
             else {
-                return Error::failure("unexpected token after enum head declare : enum xxx : xxx ... <--", ERRR());
+                return Result::failure("unexpected token after enum head declare : enum xxx : xxx ... <--", ERRR());
             }
         }
         else if (check(TokenType::kLBraces)) {
@@ -893,7 +921,7 @@ do { \
                         continue;
                     }
                     else {
-                        return Error::failure("Invalied expression in enum body", ERRR());
+                        return Result::failure("Invalied expression in enum body", ERRR());
                     }
                 }
                 else if (check(TokenType::kRBraces)) {
@@ -907,7 +935,7 @@ do { \
             } while(true);
         }
         else {
-            return Error::failure("unexpected token after enum head declare : enum xxx ... <--", ERRR());
+            return Result::failure("unexpected token after enum head declare : enum xxx ... <--", ERRR());
         }
 
         return gd.getPtr();
@@ -922,7 +950,7 @@ do { \
         advance();
 
         if (!check(TokenType::kIdentifier)) {
-            return Error::failure("unexpected token after field keyword : field xxx <--", ERRR());
+            return Result::failure("unexpected token after field keyword : field xxx <--", ERRR());
         }
         std::string_view name = current().value;
         auto gd = ScopeGuard(new FieldDecl(name, nullptr));
@@ -938,7 +966,7 @@ do { \
 
             // check body
             if (!check(TokenType::kLBraces)) {
-                return Error::failure("unexpected token after field's type hint : field xxx : xxx ... <--", ERRR());
+                return Result::failure("unexpected token after field's type hint : field xxx : xxx ... <--", ERRR());
             }
             goto parseBody;
         }
@@ -953,13 +981,13 @@ do { \
                 advance();
 
                 if (!check(TokenType::kComma)) {
-                    return Error::failure("unexpected token after field's read function : field xxx {XXX ... <--", ERRR());
+                    return Result::failure("unexpected token after field's read function : field xxx {XXX ... <--", ERRR());
                 }
                 advance();
             } else if (check(TokenType::kComma)) {
                 advance();
             } else {
-                return Error::failure("unexpected token in field's body : field xxx {... <--", ERRR());
+                return Result::failure("unexpected token in field's body : field xxx {... <--", ERRR());
             }
 
             // check write function name
@@ -969,13 +997,13 @@ do { \
                 advance();
 
                 if (!check(TokenType::kRBraces)) {
-                    return Error::failure("unexpected token after field's write function : field xxx {XXX,XXX... <--", ERRR());
+                    return Result::failure("unexpected token after field's write function : field xxx {XXX,XXX... <--", ERRR());
                 }
                 advance();
             } else if (check(TokenType::kRBraces)) {
                 advance();
             } else {
-                return Error::failure("unexpected token in field's body : field xxx {XXX,... <--", ERRR());
+                return Result::failure("unexpected token in field's body : field xxx {XXX,... <--", ERRR());
             }
 
             if (check(TokenType::kEq)) {
@@ -996,26 +1024,66 @@ do { \
             }
             else {
                 errorBc:
-                return Error::failure("unexpected token after field declare expression : field xxx {XXX,XXX} = XXX... <--", ERRR());
+                return Result::failure("unexpected token after field declare expression : field xxx {XXX,XXX} = XXX... <--", ERRR());
             }
         }
         else {
-            return Error::failure("unexpected token after field's name : field XXX ... <--", ERRR());
+            return Result::failure("unexpected token after field's name : field XXX ... <--", ERRR());
         }
 
         return gd.getPtr();
     }
 
     Expected<InterfaceDecl*> NParser::parseInterface() {
+        if (check(TokenType::kInterface)) {
+            return nullptr;
+        }
+        advance();
 
+        // parse interface's name
+        if (!check(TokenType::kIdentifier)) {
+            return Result::failure("unexpected token after interface keyword : interface ... <--", ERRR());
+        }
+        std::string_view name = current().value;
+        auto gd = ScopeGuard(new InterfaceDecl(name));
+        advance();
+
+        if (check(TokenType::kLBraces)) {
+            // parse interface body
+
+            do {
+                advance();
+                if (!check(TokenType::kIdentifier)) {
+                    return Result::failure("unexpected identifier in interface body", ERRR());
+                }
+
+                ASTModifier md {};
+                auto r = parseModifier();
+                CHECK_ERROR(r);
+                md = r.value();
+
+                std::string_view func_name = current().value;
+                advance();
+
+
+            } while(true);
+        } else if (check(TokenType::kSemicolon)) {
+            // parse interface defination
+
+            advance();
+        } else {
+            return Result::failure("unexpected token after interface's name : interface xxx ... <--", ERRR());
+        }
+
+        return gd.getPtr();
     }
 
     Expected<StructDecl *> NParser::parseStruct() {
-
+        return nullptr;
     }
 
     Expected<ASTExpr*> NParser::parseExpr() {
-
+        return nullptr;
     }
 
     bool NParser::parse()
@@ -1035,6 +1103,24 @@ do { \
         return true;
     }
 
+#if NE_DEBUG
+    bool NParser::debugParse() {
+        auto& output = m_args.output;
+        output.clearNodes();
 
+        // parse entry
+        auto r = parseRoot();
+        if (!r) {
+            m_diag.printAll();
+            return false;
+        }
+
+        // dump ast logic
+
+        return true;
+    }
+
+
+#endif
 
 }

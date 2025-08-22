@@ -33,17 +33,17 @@ namespace neo {
         }
     }
 
-
-    std::string NumberLiteralExpr::toString() const {
-        return std::string {"["} + getTypeString(m_type).data() + "] " + getNumberString();
-    }
-
-
-    std::string BinaryExpr::toString() const {
-        return left->toString() + " " + getTypeString(op).data() + " " + right->toString();
-    }
-
-    std::string BoolLiteralExpr::toString() const {
-        return ASTNode::toString();
-    }
+//
+//    std::string NumberLiteralExpr::toString() const {
+//        return std::string {"["} + getTypeString(m_type).data() + "] " + getNumberString();
+//    }
+//
+//
+//    std::string BinaryExpr::toString() const {
+//        return left->toString() + " " + getTypeString(op).data() + " " + right->toString();
+//    }
+//
+//    std::string BoolLiteralExpr::toString() const {
+//        return ASTNode::toString();
+//    }
 }

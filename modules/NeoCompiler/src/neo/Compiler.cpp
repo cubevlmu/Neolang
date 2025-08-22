@@ -56,7 +56,7 @@ namespace neo {
 
         t.end();
         if (!r) {
-            LogError("Error occurrenced in compile process! Compiler halt in {} s.", t.secondTime());
+            LogError("Result occurrenced in compile process! Compiler halt in {} s.", t.secondTime());
         } else {
             LogInfo("Compiler process end in {} s.", t.secondTime());
         }

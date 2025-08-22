@@ -1,10 +1,12 @@
 #include "Type.hpp"
 
+#include <utility>
+#include "neo/compiler/DebugOutput.hpp"
+
 namespace neo {
 
-    ASTTypeNode::ASTTypeNode(std::string module, std::string type)
+    ASTTypeNode::ASTTypeNode(std::string type)
         : ASTNode(kType)
-        , moduleStr {std::move(module) }
         , typeStr {std::move(type)}
     {
 
@@ -13,4 +15,46 @@ namespace neo {
     ASTTypeNode::~ASTTypeNode() {
 
     }
+
+    void ASTTypeNode::debugPrint(NDebugOutput &output) {
+        ASTNode::debugPrint(output);
+        output.writeLine("\t   |- Type: {}", typeStr);
+    }
+
+
+    ASTArrayType::ASTArrayType(std::string typeStr, bool isReceiver, std::initializer_list<int> size)
+        : ASTTypeNode(std::move(typeStr))
+        , isReceiver {isReceiver}
+        , size {size}
+    {
+
+    }
+
+    ASTArrayType::~ASTArrayType() {
+        size.clear();
+    }
+
+    void ASTArrayType::debugPrint(NDebugOutput &output) {
+        ASTTypeNode::debugPrint(output);
+        output.writeLine("\t   |- isReceiver: {}", isReceiver);
+        output.writeLine("\t   |- dimession: {}", dimenssion);
+        output.writeLine("\t   |- size: ");
+        psize idx = 0;
+        for (auto& s : size) {
+            output.writeLine("\t   |- [{}] {}", idx, s);
+            idx++;
+        }
+    }
+
+
+    ASTPointerType::ASTPointerType(std::string typeStr)
+        : ASTTypeNode(std::move(typeStr))
+    {
+
+    }
+
+    ASTPointerType::~ASTPointerType() {
+
+    }
+
 }

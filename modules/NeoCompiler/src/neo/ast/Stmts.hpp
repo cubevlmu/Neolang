@@ -23,14 +23,6 @@ namespace neo {
         ~CompoundStmt() override = default;
 
     public:
-        std::string toString() const override {
-            std::string str{};
-            for (auto& stmt : statements) {
-                str += stmt->toString();
-                str += '\n';
-            }
-            return str;
-        };
 
     public:
         std::vector<ASTStmt*> statements;

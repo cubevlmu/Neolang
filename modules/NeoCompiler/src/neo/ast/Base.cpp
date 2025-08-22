@@ -72,25 +72,36 @@ namespace neo {
     }
 
 
+    static void writeAttribute(NSerializer* s, Attribute* attribute) {
+        s->write(attribute->name);
+        s->write(attribute->arguments.size());
+        for (auto* item : attribute->arguments) {
+            item->write(s);
+        }
+    }
+
 
     void ASTNode::debugPrint(NDebugOutput& output) {
-        return output.writeLine(toString().data());
+        output.writeLine("\t|- {}", getTypeString(m_type));
     }
     
 
     void ASTNode::write(NSerializer* s)
     {
-        // Write ASTType
+        // ASTType
         s->write((i32)m_type);
+        // SourceLoc
+        m_loc.write(s);
     }
 
 
     void ASTNode::read(NSerializer* s)
     {
-        // Read ASTType
-        i32 type = 0;
-        s->read(type);
-        m_type = (ASTType)type;
+        // ASTType
+        s->read(m_type);
+        // SourceLoc
+        m_loc.read(s);
+        //TODO create instance
     }
 
 
@@ -99,6 +110,37 @@ namespace neo {
             delete ptr;
         }
         attributes.clear();
+    }
+
+    void ASTDecl::write(NSerializer *s) {
+        ASTNode::write(s);
+
+        // Modifier
+        s->write(modifier.isInternal);
+        s->write(modifier.isPrivate);
+        s->write(modifier.isStatic);
+        s->write(modifier.isConst);
+        s->write(modifier.isFinal);
+        s->write(modifier.isInline);
+        s->write(modifier.isProtected);
+
+        // isMarkedExport
+        s->write(isMarkedExport);
+
+        // attributes
+        s->write(attributes.size());
+        for (auto* attribute : attributes) {
+            writeAttribute(s, attribute);
+        }
+    }
+
+    void ASTDecl::read(NSerializer *s) {
+        ASTNode::read(s);
+    }
+
+    void ASTDecl::debugPrint(NDebugOutput &output) {
+        ASTNode::debugPrint(output);
+        output.writeLine("\t|- DeclType: {}", getTypeString(m_kind));
     }
 
 

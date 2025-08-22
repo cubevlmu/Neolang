@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "neo/base/Logger.hpp"
+#include "neo/base/Format.hpp"
 
 namespace neo {
 
@@ -15,6 +16,16 @@ namespace neo {
 
         virtual void writeLine(const std::string_view& line) = 0;
         virtual void write(const std::string_view& txt) = 0;
+
+        template <typename... Args>
+        NE_FORCE_INLINE void write(std::string_view fmtStr, const Args&... args) {
+              write(neo::format(fmtStr, args...));
+        }
+        template <typename... Args>
+        NE_FORCE_INLINE void writeLine(std::string_view fmtStr, const Args&... args) {
+            writeLine(neo::format(fmtStr, args...));
+        }
+
         virtual bool print() = 0;
     };
 

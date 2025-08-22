@@ -118,8 +118,8 @@ namespace neo {
     {
         TokenType type;
         std::string value;
-        u32 line;
-        u32 cursor;
+        psize line;
+        psize cursor;
 
         static std::string_view typeString(TokenType);
         static TokenType checkIdentifier(const std::string_view& str);

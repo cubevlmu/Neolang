@@ -251,14 +251,14 @@ namespace neo {
                 if (isDigit(c)) {
                     bool e = lexNumber();
                     if (!e) {
-                        LogError("scan number error -> ", c);
+                        LogError("scan number result -> ", c);
                         LogError("[", m_lex_line, ':', m_lex_cursor, "] '", getLine(), "'");
                     }
                 }
                 else if (isLetter(c)) {
                     bool e = lexIdentifier();
 //                    if (!e) {
-//                        LogError("[Lexer] scan identifier error -> ", c);
+//                        LogError("[Lexer] scan identifier result -> ", c);
 //                    }
                 }
                 else if (c == CHAR_EOF) {
@@ -291,18 +291,17 @@ namespace neo {
 
     NToken& NLexer::previousToken()
     {
-        m_tk_idx--;
-        if (m_tk_idx < 0)
-            m_tk_idx = 0;
+        if (m_tk_idx > 0)
+            m_tk_idx--;
         return m_tokens[m_tk_idx];
     }
 
 
     NToken& NLexer::peekPrevious()
     {
-        if (m_tk_idx - 1 < 0)
-            return NToken::Invalid;
-        return m_tokens[m_tk_idx - 1];
+        if (m_tk_idx > 0)
+            return m_tokens[m_tk_idx - 1];
+        return NToken::Invalid;
     }
 
 

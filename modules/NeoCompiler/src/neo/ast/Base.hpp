@@ -41,13 +41,10 @@ namespace neo {
         ~ASTNode() override = default;
 
     public:
-        virtual std::string toString() const {
-            return { getTypeString(m_type).data() };
-        };
         virtual void debugPrint(NDebugOutput& output);
 
-        virtual void read(NSerializer* s) override;
-        virtual void write(NSerializer* s) override;
+        void read(NSerializer* s) override;
+        void write(NSerializer* s) override;
 
         ASTType getType() const {
             return m_type;
@@ -75,6 +72,7 @@ namespace neo {
         kDecl
     };
     std::string_view getTypeString(StmtKind);
+    class ASTStmt* createStmt(StmtKind);
 
 
     class ASTStmt : public ASTNode
@@ -111,6 +109,7 @@ namespace neo {
         kNew
     };
     std::string_view getTypeString(ExprKind);
+    class ASTExpr* createExpr(ExprKind);
 
 
     class ASTExpr : public ASTStmt
@@ -145,16 +144,17 @@ namespace neo {
         kTopLevelDecls
     };
     std::string_view getTypeString(DeclKind);
+    class ASTDecl* createDecl(DeclKind);
 
 
     struct ASTModifier {
-        bool isStatic;
-        bool isFinal;
-        bool isConst;
-        bool isPrivate;
-        bool isProtected;
-        bool isInternal;
-        bool isInline;
+        bool isStatic : 1 = false;
+        bool isFinal : 1 = false;
+        bool isConst : 1 = false;
+        bool isPrivate : 1 = false;
+        bool isProtected : 1 = false;
+        bool isInternal : 1 = false;
+        bool isInline : 1 = false;
 
         ASTModifier() noexcept;
         ASTModifier(bool s, bool f, bool c, bool priv, bool prot, bool inter, bool inl) noexcept;
@@ -183,6 +183,11 @@ namespace neo {
         NE_FORCE_INLINE DeclKind getDeclKind() const {
             return m_kind; 
         }
+
+        void read(NSerializer* s) override;
+        void write(NSerializer* s) override;
+
+        void debugPrint(NDebugOutput& output) override;
 
     public:
         bool isMarkedExport;

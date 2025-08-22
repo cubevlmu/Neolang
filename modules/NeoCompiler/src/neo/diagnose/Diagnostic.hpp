@@ -116,16 +116,16 @@ namespace neo {
     };
 
 
-    class Error
+    class Result
     {
     public:
-        Error() = default;
+        Result() = default;
 
-        static Error success() { return {}; }
-        static Error failure(std::string msg) { return Error(std::move(msg)); }
-        static Error failure(std::string msg, DiagnosticCollector* c, NToken& t, NSourceFile* f) { 
+        static Result success() { return {}; }
+        static Result failure(std::string msg) { return Result(std::move(msg)); }
+        static Result failure(std::string msg, DiagnosticCollector* c, NToken& t, NSourceFile* f) {
             c->error(t.location(f), msg);
-            return Error(std::move(msg)); 
+            return Result(std::move(msg));
         }
 
         bool hasError() const { return !m_messages.empty(); }
@@ -135,7 +135,7 @@ namespace neo {
             m_messages.push_back(std::move(msg));
         }
 
-        Error& operator<<(const std::string& msg) {
+        Result& operator<<(const std::string& msg) {
             append(msg);
             return *this;
         }
@@ -143,7 +143,7 @@ namespace neo {
     private:
         std::vector<std::string> m_messages;
 
-        explicit Error(std::string msg) {
+        explicit Result(std::string msg) {
             m_messages.push_back(std::move(msg));
         }
     };
@@ -156,8 +156,11 @@ namespace neo {
         Expected(T value)
             : m_value(std::move(value)), m_hasError(false), m_got {false} {
         }
-        Expected(Error error)
-            : m_error(std::move(error)), m_hasError(true), m_got {false} {
+        Expected(Result error)
+            : m_result(std::move(error)), m_hasError(error.hasError()), m_got {false} {
+            if constexpr (std::is_pointer_v<T>) {
+                m_value = nullptr;
+            }
         }
         ~Expected() {
             if (m_got) return;
@@ -168,8 +171,8 @@ namespace neo {
         }
 
         bool hasError() const { return m_hasError; }
-        const Error& error() const { return m_error; }
-        Error& error() { return m_error; }
+        const Result& result() const { return m_result; }
+        Result& result() { return m_result; }
 
         const T& value() const { NE_ASSERT(!m_hasError); return m_value; }
         T& value() { 
@@ -185,7 +188,7 @@ namespace neo {
 
     private:
         T m_value;
-        Error m_error;
+        Result m_result;
         bool m_hasError;
         bool m_got;
     };
@@ -196,22 +199,22 @@ namespace neo {
     {
     public:
         Expected() : m_hasError(false) {}
-        Expected(Error error) : m_error(std::move(error)), m_hasError(true) {}
+        Expected(Result r) : m_result(std::move(r)), m_hasError(r.hasError()) {}
 
         bool hasError() const { return m_hasError; }
-        const Error& error() const { return m_error; }
-        Error& error() { return m_error; }
+        const Result& result() const { return m_result; }
+        Result& result() { return m_result; }
 
         explicit operator bool() const { return !m_hasError; }
 
     private:
-        Error m_error;
+        Result m_result;
         bool m_hasError;
     };
 
 #define CHECK_ERROR(V) do { \
     if (!V) { \
-        return V.error(); \
+        return V.result(); \
     } \
 } while(false)
 

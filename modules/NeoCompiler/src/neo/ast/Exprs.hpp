@@ -132,8 +132,6 @@ namespace neo {
             return m_type;
         }
 
-        virtual std::string toString() const override;
-
     public:
         union {
             u8 u8; u16 u16; u32 u32; u64 u64;
@@ -158,7 +156,6 @@ namespace neo {
         NE_FORCE_INLINE LiteralType getType() const {
             return LiteralType::kBool;
         }
-        virtual std::string toString() const override;
 
         NE_FORCE_INLINE void setValue(bool v) {
             m_val = v;
@@ -195,7 +192,6 @@ namespace neo {
         ~BinaryExpr() = default;
 
     public:
-        virtual std::string toString() const override;
 
     public:
         ASTExpr* left;
@@ -230,10 +226,6 @@ namespace neo {
         ~UnaryExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            return toTypeString(op).data() + operand->toString();
-        }
-
     public:
         UnaryOp op;
         ASTExpr* operand;
@@ -258,13 +250,6 @@ namespace neo {
         ~CallExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            std::string str = funcTag->toString();
-            for (auto& args : callArgs) {
-                str.append(" ").append(args->toString());
-            }
-            return str;
-        }
 
     public:
         ASTExpr* funcTag;
@@ -284,9 +269,6 @@ namespace neo {
         ~MemberAccessExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            return object->toString() + (isUnsafeAccess ? "->" : ".") + member;
-        }
 
     public:
         ASTExpr* object;
@@ -306,9 +288,6 @@ namespace neo {
         ~VariableRefExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            return variableName;
-        }
 
     public:
         std::string variableName;
@@ -328,10 +307,6 @@ namespace neo {
         ~CastExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            return std::string {"("} + castTo->toString().data() + ")" + object->toString();
-        }
-
     public:
         ASTTypeNode* castTo;
         ASTExpr* object;
@@ -354,21 +329,6 @@ namespace neo {
         ~NewExpr() = default;
 
     public:
-        virtual std::string toString() const override {
-            std::string str {"new "};
-            str += type->toString().data();
-            str += "(";
-
-            for (auto& arg : arguments) {
-                str += arg->toString();
-                str += " ";
-            }
-
-            str += ")";
-
-            return str;
-        }
-
     public:
         ASTTypeNode* type;
         std::vector<ASTExpr*> arguments;

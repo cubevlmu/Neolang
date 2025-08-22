@@ -10,59 +10,61 @@ namespace neo {
     class VarDecl : public ASTDecl
     {
     public:
-        VarDecl(const std::string_view& name, ASTTypeNode* type, ASTExpr* init = nullptr, ASTDecl* parent = nullptr)
+        VarDecl() : ASTDecl(DeclKind::kVar) {}
+        VarDecl(const std::string_view& name, ASTTypeNode* type, ASTExpr* init = nullptr)
             : ASTDecl(DeclKind::kVar)
             , name{ name }
-            , parent{ parent }
             , type{ type }
             , initExpr{ init }
         {
         }
 
     public:
-        ASTDecl* parent = nullptr;
+        void debugPrint(NDebugOutput& output) override;
+
+        void read(NSerializer* s) override;
+        void write(NSerializer* s) override;
+
+    public:
         std::string name;
-        ASTTypeNode* type;
+        ASTTypeNode* type = nullptr;
         ASTExpr* initExpr = nullptr;
-        bool isConst = false;
-        bool isStatic = false;
     };
 
 
     class FuncDecl : public ASTDecl
     {
     public:
+        FuncDecl() : ASTDecl(DeclKind::kFunc) {}
         FuncDecl(const std::string_view& name, ASTTypeNode* retType, std::vector<VarDecl*> args, class CompoundStmt* body = nullptr)
             : ASTDecl(DeclKind::kFunc)
             , name{ name }
-            , returnType{ retType }
             , args{std::move( args )}
+            , returnType{ retType }
             , funcBody{ body }
         {
         }
         ~FuncDecl() override = default;
 
     public:
-        std::string name;
-        ASTTypeNode* returnType;
-        std::vector<VarDecl*> args;
-        CompoundStmt* funcBody;
+        void debugPrint(NDebugOutput& output) override;
 
-        bool isMarkedExtern;
-        bool isMarkedInline;
-        bool isClassFunc;
-        bool isVirtualFunc;
-        bool isOverrideFunc;
+    public:
+        std::string name;
+        std::vector<VarDecl*> args;
+        ASTTypeNode* returnType = nullptr;
+        CompoundStmt* funcBody = nullptr;
     };
 
 
     class FieldDecl : public ASTDecl
     {
     public:
-        FieldDecl(const std::string_view& name, ASTTypeNode* type, ASTExpr* init = nullptr, ASTDecl* parent = nullptr)
+        FieldDecl()
+            : ASTDecl(DeclKind::kField) {}
+        FieldDecl(const std::string_view& name, ASTTypeNode* type, ASTExpr* init = nullptr)
             : ASTDecl(DeclKind::kField)
             , name{ name }
-            , parent{ parent }
             , type{ type }
             , init{ init }
             , setFuncName{}
@@ -75,8 +77,7 @@ namespace neo {
         std::string name;
         std::string setFuncName;
         std::string getFuncName;
-        ASTDecl* parent;
-        ASTTypeNode* type;
+        ASTTypeNode* type = nullptr;
         ASTExpr* init = nullptr;
     };
 
@@ -84,11 +85,11 @@ namespace neo {
     class ClassDecl : public ASTDecl
     {
     public:
-        ClassDecl(const std::string_view& name, std::vector<ASTTypeNode*> baseClasses, ASTDecl* parent = nullptr)
+        ClassDecl() : ASTDecl(DeclKind::kClass) {}
+        ClassDecl(const std::string_view& name, std::vector<ASTTypeNode*> baseClasses)
             : ASTDecl(DeclKind::kClass)
             , name{ name }
             , baseClasses{std::move( baseClasses )}
-            , parent{ parent }
         {
         }
         ~ClassDecl() override = default;
@@ -101,18 +102,17 @@ namespace neo {
         std::vector<VarDecl*> variables;
         std::vector<FuncDecl*> functions;
         std::vector<FuncDecl*> ctors;
-        FuncDecl* dtors;
-        ASTDecl* parent;
+        FuncDecl* dtors = nullptr;
     };
 
 
     class StructDecl : public ASTDecl
     {
     public:
-        StructDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+        StructDecl() : ASTDecl(DeclKind::kStruct) {}
+        StructDecl(const std::string_view& name)
             : ASTDecl(DeclKind::kStruct)
             , name{ name }
-            , parent{ parent }
         {
         }
         ~StructDecl() override = default;
@@ -121,17 +121,16 @@ namespace neo {
         std::string name;
         std::vector<VarDecl*> variables;
         std::vector<FieldDecl*> fields;
-        ASTDecl* parent = nullptr;
     };
 
 
     class InterfaceDecl : public ASTDecl
     {
     public:
-        InterfaceDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+        InterfaceDecl() : ASTDecl(DeclKind::kInterface) {}
+        InterfaceDecl(const std::string_view& name)
             : ASTDecl(DeclKind::kInterface)
             , name{ name }
-            , parent{ parent }
         {
         }
         ~InterfaceDecl() override;
@@ -139,17 +138,16 @@ namespace neo {
     public:
         std::string name;
         std::vector<FuncDecl*> children;
-        ASTDecl* parent = nullptr;
     };
 
 
     class EnumDecl : public ASTDecl
     {
     public:
-        EnumDecl(const std::string_view& name, ASTDecl* parent = nullptr)
+        EnumDecl() : ASTDecl(DeclKind::kEnum) {}
+        EnumDecl(const std::string_view& name)
             : ASTDecl(DeclKind::kEnum)
             , name{ name }
-            , parent{ parent }
             , baseType{nullptr}
         {
         }
@@ -158,35 +156,31 @@ namespace neo {
     public:
         std::string name;
         std::vector<VarDecl*> children;
-        ASTTypeNode* baseType;
-        ASTDecl* parent = nullptr;
+        ASTTypeNode* baseType = nullptr;
     };
 
 
     class ModuleDecl : public ASTDecl
     {
     public:
-        ModuleDecl(const std::string_view& name, ModuleDecl* parent = nullptr)
+        ModuleDecl() : ASTDecl(DeclKind::kModule) {}
+        ModuleDecl(const std::string_view& name)
             : ASTDecl(DeclKind::kModule)
-            , parent{ parent }
             , name{ name }
         {
         }
         ~ModuleDecl() override;
 
     public:
-        class TopLevelDecls* children;
         std::string name;
-        ModuleDecl* parent = nullptr;
+        class TopLevelDecls* children = nullptr;
     };
 
 
     class TopLevelDecls : public ASTDecl 
     {
     public:
-        TopLevelDecls()
-            : ASTDecl(DeclKind::kTopLevelDecls)
-        {}
+        TopLevelDecls() : ASTDecl(DeclKind::kTopLevelDecls) {}
         ~TopLevelDecls() override;
     
     public:

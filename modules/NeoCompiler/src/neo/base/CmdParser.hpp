@@ -23,7 +23,7 @@ namespace neo {
         NCmdParser(i32 size, char** argv);
         ~NCmdParser();
 
-        /// return false if any syntax error happend
+        /// return false if any syntax result happend
         bool parse();
 
         /// register boolean switch receiver

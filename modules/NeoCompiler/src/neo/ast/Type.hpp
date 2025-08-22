@@ -8,11 +8,13 @@ namespace neo {
     class ASTTypeNode : public ASTNode
     {
     public:
-        ASTTypeNode(std::string module, std::string type);
+        ASTTypeNode(std::string type);
         ~ASTTypeNode() override;
 
     public:
-        std::string moduleStr;
+        void debugPrint(NDebugOutput& output) override;
+
+    public:
         std::string typeStr;
     };
 
@@ -20,8 +22,11 @@ namespace neo {
     class ASTArrayType : public ASTTypeNode
     {
     public:
-        ASTArrayType(std::string module, std::string typeStr, bool isReceiver, std::initializer_list<int> size);
+        ASTArrayType(std::string typeStr, bool isReceiver, std::initializer_list<int> size);
         ~ASTArrayType() override;
+
+    public:
+        void debugPrint(NDebugOutput& output) override;
 
     public:
         bool isReceiver;
@@ -33,7 +38,7 @@ namespace neo {
     class ASTPointerType : public ASTTypeNode
     {
     public:
-        ASTPointerType(std::string module, std::string typeStr);
+        ASTPointerType(std::string typeStr);
         ~ASTPointerType() override;
     };
 }

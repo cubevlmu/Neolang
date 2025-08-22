@@ -44,6 +44,10 @@ namespace neo {
         bool parse();
         void debugPrint(class NDebugOutput&);
 
+#if NE_DEBUG
+        bool debugParse();
+#endif
+
     private:
         NToken& current();
         NToken& peek();
@@ -71,7 +75,6 @@ namespace neo {
         Expected<EnumDecl*> parseEnum();
         Expected<InterfaceDecl*> parseInterface();
         Expected<StructDecl*> parseStruct();
-        Expected<FuncDecl*> parseFunc();
         Expected<VarDecl*> parseVarDecl();
 
         Expected<FieldDecl*> parseField();
@@ -79,6 +82,8 @@ namespace neo {
         Expected<std::vector<Attribute*>> parseAttributes();
         Expected<ASTModifier> parseModifier();
 
+        Expected<FuncDecl*> parseFunc();
+        Expected<std::vector<VarDecl*>> parseFuncArgs();
         Expected<std::vector<ASTExpr*>> parseFuncCallArgs();
 
 

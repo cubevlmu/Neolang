@@ -1,0 +1,8 @@
+// type test
+fun a() {
+var a : i32[];
+var b : i32[10];
+var c : i32[10,10];
+var d : i32*;
+var e : test.i32;
+}

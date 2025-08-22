@@ -1,0 +1,23 @@
+// function parser test
+
+fun test() {
+
+}
+
+fun test1() i32 {
+}
+
+fun test2(a : i32) i32 {
+}
+
+fun test3(a : i32, b : i32) i32 {
+}
+
+fun test4(a : i32*) i32 {
+}
+
+fun test5(a : i32) {
+}
+
+fun test6(a : i32[]) i32 {
+}

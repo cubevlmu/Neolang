@@ -1,0 +1,8 @@
+// module parser test
+
+module global;
+module global.a;
+module global.b {
+    module c {
+    }
+}
